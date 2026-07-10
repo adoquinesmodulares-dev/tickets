@@ -359,6 +359,10 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
           <option value="">— Seleccionar —</option>
         </select>
       </div>
+      <div class="frow" id="rwWorkerOtroRow" style="display:none">
+        <label>Nombre del colaborador</label>
+        <input type="text" id="rwWorkerOtro" placeholder="Ej: Pedro González" />
+      </div>
 
       <!-- 3 funciones principales -->
       <div class="frow">
@@ -742,7 +746,6 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
 const WORKERS = [
   { id:'yoel',       nom:'Yoel Yévenes',        tel:'56942830033' },
   { id:'cristhian',  nom:'Cristhian González',  tel:'56900000005' },
-  { id:'manuel',     nom:'Manuel Martínez',     tel:'56900000008' },
   { id:'yerlinton',  nom:'Yerlinton Rivas',     tel:'56900000009' },
   { id:'jonathan',   nom:'Jonathan Cifuentes',  tel:'56900000010' },
   { id:'yonis',      nom:'Yonis Mosquera',      tel:'56900000011' },
@@ -750,6 +753,7 @@ const WORKERS = [
   { id:'brayan',     nom:'Brayan Contreras',    tel:'56982636125' },
   { id:'mauricio',   nom:'Mauricio Villa',      tel:'56955204989' },
   { id:'benjamin',   nom:'Benjamín Catalán',    tel:'56956061296' },
+  { id:'mauricio_c', nom:'Mauricio Casas',      tel:'56975457948' },
 ];
 
 // ══════════════════════════════════════════════════════
@@ -811,6 +815,12 @@ function init() {
       o.value = w.id; o.textContent = w.nom;
       sel.appendChild(o);
     });
+    // Opción manual al final (solo para selector de producción)
+    if (id === 'rwWorker') {
+      const o = document.createElement('option');
+      o.value = '__otro__'; o.textContent = 'Otro colaborador…';
+      sel.appendChild(o);
+    }
   });
 }
 
@@ -892,6 +902,9 @@ function onFabTChange() {
 }
 
 function onWorkerChange() {
+  const wid = document.getElementById('rwWorker').value;
+  document.getElementById('rwWorkerOtroRow').style.display = wid === '__otro__' ? 'block' : 'none';
+  if (wid !== '__otro__') document.getElementById('rwWorkerOtro').value = '';
   selRol=''; fabTOn=false;
   document.getElementById('togFabT').checked = false;
   ['fab','trp','trp_a','pas'].forEach(r => { document.getElementById('pill-'+r).className='rpill'; });
@@ -902,7 +915,7 @@ function onWorkerChange() {
   if (cantLbl) cantLbl.textContent = 'Unidades Producidas *';
   const cantInp = document.getElementById('rwCant');
   if (cantInp) cantInp.placeholder = 'ej: 86';
-  setCalc('— Selecciona función e ingresa unidades —','');
+  setCalc('— Selecciona colaborador, función e ingresa unidades —','');
 }
 
 function setCalc(txt, cls) {
@@ -947,10 +960,15 @@ function recalc() {
 }
 
 function saveRecord() {
-  const wid   = document.getElementById('rwWorker').value;
+  let wid     = document.getElementById('rwWorker').value;
   const cant  = parseInt(document.getElementById('rwCant').value)||0;
   const model = document.getElementById('rwModelo').value;
   if (!wid)    { toast('Selecciona el colaborador'); return; }
+  if (wid === '__otro__') {
+    const nombre = document.getElementById('rwWorkerOtro').value.trim();
+    if (!nombre) { toast('Escribe el nombre del colaborador'); return; }
+    wid = nombre; // el nombre se usa como ID único para esta sesión
+  }
   if (!selRol) { toast('Selecciona la función del día'); return; }
   if (cant<=0) { toast(selRol==='trp_a' ? 'Ingresa los días trabajados' : 'Ingresa las unidades producidas'); return; }
 
@@ -980,6 +998,8 @@ function saveRecord() {
   // Reset form
   document.getElementById('rwWorker').value=''; document.getElementById('rwCant').value='';
   document.getElementById('rwModelo').value='Bloque';
+  document.getElementById('rwWorkerOtro').value='';
+  document.getElementById('rwWorkerOtroRow').style.display='none';
   selRol=''; fabTOn=false;
   document.getElementById('togFabT').checked=false;
   ['fab','trp','trp_a','pas'].forEach(r=>{document.getElementById('pill-'+r).className='rpill';});
@@ -989,7 +1009,7 @@ function saveRecord() {
   const cantInpR=document.getElementById('rwCant'); if(cantInpR) cantInpR.placeholder='ej: 86';
   setCalc('— Selecciona colaborador, función e ingresa unidades —','');
   const w=WORKERS.find(x=>x.id===wid);
-  toast(`✓ ${w?.nom} guardado`);
+  toast(`✓ ${w?.nom || wid} guardado`);
 }
 
 function recalcTromperos() {
@@ -1881,4 +1901,3 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
-                   
