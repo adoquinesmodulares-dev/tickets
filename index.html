@@ -311,21 +311,13 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
         <label>Encargado / Supervisor *</label>
         <select id="inpSup">
           <option value="">— Seleccionar —</option>
-          <option value="Mauricio Casas">Mauricio Casas</option>
+          <option value="Daniel Matías Silva">Daniel Matías Silva</option>
+          <option value="Juan Carlos León">Juan Carlos León</option>
           <option value="__otros__">Otro encargado…</option>
         </select>
       </div>
-      <div class="frow" id="otrosSupRow" style="display:none">
-        <label>Seleccionar encargado</label>
-        <select id="inpSupOtros">
-          <option value="">— Elegir —</option>
-          <option value="Daniel Matías Silva">Daniel Matías Silva</option>
-          <option value="Juan Carlos León">Juan Carlos León</option>
-          <option value="__manual__">Otro (escribir nombre)…</option>
-        </select>
-      </div>
       <div class="frow" id="supManualRow" style="display:none">
-        <label>Nombre completo</label>
+        <label>Nombre del encargado</label>
         <input type="text" id="inpSupManual" placeholder="Ej: Pedro González" />
       </div>
       <div class="frow" style="margin-bottom:0">
@@ -807,13 +799,8 @@ function init() {
   });
   document.getElementById('inpSup').addEventListener('change', e => {
     const v = e.target.value;
-    document.getElementById('otrosSupRow').style.display  = v==='__otros__' ? 'block':'none';
-    document.getElementById('supManualRow').style.display = 'none';
-    if (v!=='__otros__') document.getElementById('inpSupOtros').value='';
-  });
-  document.getElementById('inpSupOtros').addEventListener('change', e => {
-    document.getElementById('supManualRow').style.display =
-      e.target.value==='__manual__' ? 'block':'none';
+    document.getElementById('supManualRow').style.display = v==='__otros__' ? 'block':'none';
+    if (v!=='__otros__') document.getElementById('inpSupManual').value='';
   });
 
   // Populate dropdowns
@@ -847,12 +834,7 @@ function setMode(m) {
 function getSup() {
   const v = document.getElementById('inpSup').value;
   if (!v) return '';
-  if (v === '__otros__') {
-    const v2 = document.getElementById('inpSupOtros').value;
-    if (!v2) return '';
-    if (v2 === '__manual__') return document.getElementById('inpSupManual').value.trim();
-    return v2;
-  }
+  if (v === '__otros__') return document.getElementById('inpSupManual').value.trim();
   return v;
 }
 
@@ -1883,4 +1865,20 @@ function presEnviarEmail() {
   if (!d) return;
   const activas = d.activas;
   let body = `Estimado/a ${PRES.nombre},\n\nAdjunto encontrará su presupuesto de instalación de adoquines.\n\n`;
-  body 
+  body += `N° ${d.presId}\nFecha: ${d.fmtH(d.hoy)}\nVigencia: ${d.fmtH(d.venc)}\n\n`;
+  body += `DETALLE:\n`;
+  activas.forEach(([zona,zData]) => {
+    const op = PRES_OPCIONES.find(o=>o.id===zData.opcion);
+    body += `- ${ZONA_NOM[zona]}: ${zData.m2.toFixed(2)} m² · ${op.nom}: $${Math.round(zData.m2*op.pxm2).toLocaleString('es-CL')}\n`;
+  });
+  body += `\nTOTAL CON IVA: $${d.total.toLocaleString('es-CL')}\n\n`;
+  body += `Saludos,\nAdoquines Modulares SpA\nadoquinesmodulares.cl`;
+  const sub = encodeURIComponent(`Presupuesto ${d.presId} – Adoquines Modulares`);
+  window.location.href = `mailto:?subject=${sub}&body=${encodeURIComponent(body)}`;
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
+                   
