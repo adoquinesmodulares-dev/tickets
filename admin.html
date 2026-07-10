@@ -149,6 +149,13 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .btn-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px}
 .btn-del:hover{color:var(--red)}
 
+/* ANULAR FILA */
+.btn-anular{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:3px 6px;border-radius:4px;transition:color .2s;line-height:1}
+.btn-anular:hover{color:var(--red)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink2);border:1px solid var(--brd);color:var(--paper);padding:10px 20px;border-radius:8px;font-size:13px;font-family:var(--fb);z-index:9999;transition:opacity .3s;pointer-events:none;opacity:0}
+
 /* LINK */
 .link-tickets{display:inline-flex;align-items:center;gap:6px;color:var(--amber);font-size:12px;text-decoration:none;font-family:var(--fm)}
 .link-tickets:hover{text-decoration:underline}
@@ -243,8 +250,20 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <div class="mod-grid" id="modGrid"><!-- renderizado por JS --></div>
 
   <!-- CARDS RESUMEN -->
-  <div class="sec-head" style="margin-top:20px">
-    <div class="sec-title">📊 Producción del día</div>
+  <div class="sec-head" style="margin-top:20px;align-items:center">
+    <div class="sec-title" id="secProdTitle">📊 Producción del mes</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+      <input type="month" id="inpMes"
+        style="background:var(--ink2);border:1px solid var(--brd);border-radius:6px;color:var(--fog);padding:4px 8px;font-size:13px;font-family:var(--fm);cursor:pointer"
+        onchange="onMesChange()" />
+      <input type="date" id="inpFecha"
+        style="background:var(--ink2);border:1px solid var(--brd);border-radius:6px;color:var(--fog);padding:4px 8px;font-size:12px;font-family:var(--fm);cursor:pointer"
+        title="Filtrar por día específico" onchange="onDiaChange()" />
+      <button id="btnLimpiarFiltro" onclick="limpiarFiltro()"
+        style="display:none;background:transparent;border:1px solid var(--brd);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--fm)">
+        ✕ Ver mes
+      </button>
+    </div>
   </div>
   <div class="cards" id="cardsResumen">
     <div class="card">
@@ -315,20 +334,22 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 
 </div><!-- /content -->
 
+<div id="toast"></div>
+
 <script>
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
 
 const WORKERS = [
-  { id:'yoel',      nom:'Yoel Yévenes'       },
-  { id:'cristhian', nom:'Cristhian González' },
-  { id:'manuel',    nom:'Manuel Martínez'    },
-  { id:'yerlinton', nom:'Yerlinton Rivas'    },
-  { id:'jonathan',  nom:'Jonathan Cifuentes' },
-  { id:'yonis',     nom:'Yonis Mosquera'     },
-  { id:'jose_v',    nom:'José Verdejo'       },
-  { id:'brayan',    nom:'Brayan Contreras'   },
-  { id:'mauricio',  nom:'Mauricio Villa'     },
-  { id:'benjamin',  nom:'Benjamín Catalán'  },
+  { id:'yoel',       nom:'Yoel Yévenes'       },
+  { id:'cristhian',  nom:'Cristhian González' },
+  { id:'yerlinton',  nom:'Yerlinton Rivas'    },
+  { id:'jonathan',   nom:'Jonathan Cifuentes' },
+  { id:'yonis',      nom:'Yonis Mosquera'     },
+  { id:'jose_v',     nom:'José Verdejo'       },
+  { id:'brayan',     nom:'Brayan Contreras'   },
+  { id:'mauricio',   nom:'Mauricio Villa'     },
+  { id:'benjamin',   nom:'Benjamín Catalán'  },
+  { id:'mauricio_c', nom:'Mauricio Casas'     },
 ];
 
 const ROL_LABEL = { fab:'Fabricante', trp:'Tromp. Maestro', trp_a:'Ay. Trompo', pas:'Inst. Pasto' };
@@ -384,6 +405,32 @@ function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 // ── DATOS DE PRODUCCIÓN (desde Sheets) ───────────────────────────────
 let ultimosDatos = null;
 
+// ── FILTROS DE FECHA ──────────────────────────────────────
+function onMesChange() {
+  document.getElementById('inpFecha').value = '';
+  document.getElementById('btnLimpiarFiltro').style.display = 'none';
+  document.getElementById('secProdTitle').textContent = '📊 Producción del mes';
+  cargarDatos();
+}
+
+function onDiaChange() {
+  const dia = document.getElementById('inpFecha').value;
+  if (dia) {
+    document.getElementById('btnLimpiarFiltro').style.display = 'inline-block';
+    document.getElementById('secProdTitle').textContent = '📊 Producción del día';
+  } else {
+    limpiarFiltro();
+  }
+  cargarDatos();
+}
+
+function limpiarFiltro() {
+  document.getElementById('inpFecha').value = '';
+  document.getElementById('btnLimpiarFiltro').style.display = 'none';
+  document.getElementById('secProdTitle').textContent = '📊 Producción del mes';
+  cargarDatos();
+}
+
 async function cargarDatos() {
   const btn = document.getElementById('btnRefresh');
   const icon = document.getElementById('iconRefresh');
@@ -391,22 +438,24 @@ async function cargarDatos() {
   icon.style.animation='spin .8s linear infinite';
 
   try {
-    const hoy = new Date().toISOString().slice(0,10);
-    const url = `${SHEETS_URL}?action=resumen&fecha=${hoy}`;
-    const res = await fetch(url);
+    const dia = document.getElementById('inpFecha').value;
+    const mes = document.getElementById('inpMes').value || new Date().toISOString().slice(0,7);
+    const url = dia
+      ? `${SHEETS_URL}?action=resumen&fecha=${dia}`
+      : `${SHEETS_URL}?action=mes&mes=${mes}`;
+
+    const res  = await fetch(url);
     const data = await res.json();
 
     if (data.registros) {
       ultimosDatos = data;
-      renderResumen(data);
+      renderResumen(data, !!dia);
       setEstado('ok','En línea');
     } else {
-      // Sin datos del día aún — mostrar estado vacío
       renderVacio();
-      setEstado('warn','Sin datos hoy');
+      setEstado('warn','Sin datos');
     }
   } catch(e) {
-    // Modo offline — mostrar datos demo si existen, sino vacío
     setEstado('err','Sin conexión');
     if (!ultimosDatos) renderVacio();
   }
@@ -426,31 +475,40 @@ function setEstado(tipo, txt) {
   document.getElementById('estadoTxt').textContent = txt;
 }
 
-function renderResumen(data) {
+function renderResumen(data, esDia) {
   const regs = data.registros || [];
   const totalUnid = regs.filter(r=>r.rol==='fab'||r.rol==='pas').reduce((s,r)=>s+r.cant,0);
   const totalAV   = data.av_total || 0;
   const totalBono = regs.reduce((s,r)=>s+(r.bonoProd||0)+(r.bonoT||0),0);
+  const scope = esDia ? 'del día' : 'del mes';
 
   // Cards
   setCard('cardUnid','amber',totalUnid.toLocaleString('es-CL'));
   document.getElementById('cardUnidSub').textContent = `${regs.filter(r=>r.rol==='fab').length} fabricante(s)`;
+  document.getElementById('cardsResumen').querySelector('.card:first-child .card-label').textContent = `Unidades ${scope}`;
   setCard('cardAV','blue',totalAV.toLocaleString('es-CL'));
   setCard('cardBono','green','$'+totalBono.toLocaleString('es-CL'));
-  document.getElementById('cardBonoSub').textContent = regs.length ? 'estimado del día' : 'sin registros';
+  document.getElementById('cardBonoSub').textContent = regs.length ? `estimado ${scope}` : 'sin registros';
   setCard('cardEquipo','',regs.length);
-  document.getElementById('cardEquipoSub').textContent = regs.length===1 ? 'registro hoy' : 'registros hoy';
+  document.getElementById('cardEquipoSub').textContent = regs.length===1 ? `registro ${scope}` : `registros ${scope}`;
 
-  // AV bars
+  // AV bars — en vista mensual se acumula el AV máximo del mes
   const fabs = regs.filter(r=>r.rol==='fab');
+  // Para mes: agrupar por colaborador y sumar adicionales
   if (fabs.length && totalAV>0) {
     document.getElementById('avSection').style.display='block';
     document.getElementById('avTotalNum').textContent = totalAV;
-    const maxAdic = Math.max(...fabs.map(r=>Math.max(0,r.cant-30)));
-    document.getElementById('avBars').innerHTML = fabs.map(r=>{
-      const adic = Math.max(0,r.cant-30);
-      const pct = maxAdic>0 ? Math.round(adic/maxAdic*100) : 0;
-      const nom = WORKERS.find(w=>w.id===r.wid)?.nom || r.wid || r.nom || '—';
+    // Agrupar fabricantes por nombre y sumar adicionales
+    const fabMap = {};
+    fabs.forEach(r => {
+      const nom = WORKERS.find(w=>w.id===r.wid)?.nom || r.nom || r.wid || '—';
+      if (!fabMap[nom]) fabMap[nom] = 0;
+      fabMap[nom] += Math.max(0, r.cant - 30);
+    });
+    const entries = Object.entries(fabMap).sort((a,b)=>b[1]-a[1]);
+    const maxAdic = Math.max(...entries.map(e=>e[1]), 1);
+    document.getElementById('avBars').innerHTML = entries.map(([nom, adic])=>{
+      const pct = Math.round(adic/maxAdic*100);
       return `<div class="av-bar-row">
         <div class="av-bar-lbl">${nom.split(' ')[0]}</div>
         <div class="av-bar-track"><div class="av-bar-fill" style="width:${pct}%;background:var(--blue)"></div></div>
@@ -479,11 +537,21 @@ function renderResumen(data) {
       ? `<span class="bono-val pos">$${bono.toLocaleString('es-CL')}</span>`
       : `<span class="bono-val zero">$0</span>`;
     const fabTBadge = r.fabT ? `<span class="badge b-fabt">+T</span>` : '';
+    // Subtext: mostrar fecha si es vista mensual, modelo siempre
+    const subTxt = (!esDia && r.fecha)
+      ? `${r.fecha} · ${r.modelo||'—'}`
+      : (r.modelo||'—');
+    // Escapar para onclick
+    const tktSafe = (r.tktId||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const nomSafe = nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `<tr>
-      <td><div class="worker-nom">${nom}${fabTBadge}</div><div class="worker-sub">${r.modelo||'—'}</div></td>
+      <td><div class="worker-nom">${nom}${fabTBadge}</div><div class="worker-sub">${subTxt}</div></td>
       <td><span class="badge ${bc}">${rol}</span></td>
       <td class="cant-val">${cantTxt}</td>
       <td>${bonoFmt}</td>
+      <td style="text-align:center;padding:6px 4px">
+        <button class="btn-anular" onclick="anularRow('${tktSafe}','${nomSafe}')" title="Anular registro">🗑</button>
+      </td>
     </tr>`;
   }).join('');
 
@@ -495,10 +563,40 @@ function renderResumen(data) {
           <th>Rol</th>
           <th style="text-align:center">Cantidad</th>
           <th style="text-align:right">Bono est.</th>
+          <th style="width:36px"></th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+}
+
+// ── ANULAR REGISTRO ───────────────────────────────────────
+async function anularRow(tktId, nom) {
+  if (!confirm(`¿Anular el registro de ${nom}?\n\nEl dato quedará marcado como ANULADO en la planilla (no se elimina, queda para auditoría).`)) return;
+  try {
+    const res = await fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ tipo: 'anular', tktId, nom })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('✓ Registro de ' + nom + ' anulado');
+      cargarDatos();
+    } else {
+      showToast('Error: ' + (data.mensaje || 'No se pudo anular'));
+    }
+  } catch(e) {
+    showToast('Error de conexión');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(()=>{ t.style.opacity='0'; }, 3000);
 }
 
 function setCard(id, cls, val) {
@@ -755,6 +853,8 @@ function actualizarFecha() {
 
 // ── AUTO-REFRESH CADA 5 MIN ───────────────────────────────────────────
 function iniciar() {
+  // Inicializar selector de mes con el mes actual
+  document.getElementById('inpMes').value = new Date().toISOString().slice(0,7);
   actualizarFecha();
   renderModelos();
   renderAvisos();
