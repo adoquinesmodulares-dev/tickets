@@ -117,6 +117,9 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 /* INGRESO TICKET */
 .btn-ing{width:100%;background:transparent;border:1px dashed var(--brd);color:var(--muted);padding:8px;border-radius:6px;font-size:12px;font-family:var(--fb);cursor:pointer;margin-top:10px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
 .btn-ing:hover{border-color:var(--amber);color:var(--amber)}
+.btn-scan{width:100%;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.3);color:var(--blue);padding:8px;border-radius:6px;font-size:12px;font-family:var(--fb);cursor:pointer;margin-top:8px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-scan:hover{border-color:var(--blue);background:rgba(96,165,250,.15)}
+.btn-scan:disabled{opacity:.5;cursor:not-allowed}
 .ing-form{background:var(--ink);border:1px solid var(--brd);border-radius:6px;padding:12px;margin-top:8px;display:none}
 .ing-form.open{display:block}
 .ing-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
@@ -404,6 +407,8 @@ function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 
 // ── DATOS DE PRODUCCIÓN (desde Sheets) ───────────────────────────────
 let ultimosDatos = null;
+let ultimaProd   = {}; // { 'bloque': 357, ... } — producción del período actual (desde Sheets)
+let ultimasSalidas = {}; // { 'bloque': 120, ... } — despachos del período (desde Sheets)
 
 // ── FILTROS DE FECHA ──────────────────────────────────────
 function onMesChange() {
@@ -451,6 +456,28 @@ async function cargarDatos() {
       ultimosDatos = data;
       renderResumen(data, !!dia);
       setEstado('ok','En línea');
+      // Acumular producción por modelo desde Sheets
+      const prod = {};
+      (data.registros || []).forEach(r => {
+        if ((r.rol==='fab'||r.rol==='pas') && r.cant>0) {
+          const k = (r.modelo||'').trim().toLowerCase();
+          if (k && k!=='—') prod[k] = (prod[k]||0) + r.cant;
+        }
+      });
+      ultimaProd = prod;
+      // Cargar despachos del período desde Sheets en paralelo
+      fetch(`${SHEETS_URL}?action=despachos&mes=${mes}`)
+        .then(r => r.json())
+        .then(d => {
+          const sal = {};
+          (d.despachos||[]).forEach(dep => {
+            const k = (dep.modelo||'').trim().toLowerCase();
+            if (k) sal[k] = (sal[k]||0) + (dep.cantidad||0);
+          });
+          ultimasSalidas = sal;
+          renderModelos();
+        })
+        .catch(() => renderModelos()); // si falla, igual renderiza con localStorage
     } else {
       renderVacio();
       setEstado('warn','Sin datos');
@@ -629,8 +656,8 @@ const MODELOS_DEFAULT = [
   { id:'mosaico', nombre:'Mosaico', emoji:'🔷', meta:0, nota:'' },
   { id:'hilera',  nombre:'Hilera',  emoji:'➖', meta:0, nota:'' },
 ];
-const TIPO_ING_COLOR = { produccion:'var(--blue)', compra:'var(--green)', devolucion:'var(--amber)', ajuste:'var(--muted)' };
-const TIPO_ING_LABEL = { produccion:'Producción', compra:'Compra', devolucion:'Devolución', ajuste:'Ajuste' };
+const TIPO_ING_COLOR = { despacho:'var(--red)', compra:'var(--green)', devolucion:'var(--amber)', ajuste:'var(--muted)' };
+const TIPO_ING_LABEL = { despacho:'Despacho/Venta', compra:'Compra/Ingreso', devolucion:'Devolución', ajuste:'Ajuste' };
 
 function getModelos() {
   try {
@@ -650,10 +677,28 @@ function getIngresos() {
 }
 function saveIngresos(arr) { localStorage.setItem('fp_ingresos', JSON.stringify(arr)); }
 
+function getProdPorModelo(modeloId) {
+  // Mapea el id del modelo (bloque/mosaico/hilera) a la clave en ultimaProd
+  const ALIAS = { bloque:['bloque'], mosaico:['mosaico'], hilera:['hilera'] };
+  return (ALIAS[modeloId]||[modeloId]).reduce((s,k)=>s+(ultimaProd[k]||0),0);
+}
+
+function getSalidas() {
+  try { return JSON.parse(localStorage.getItem('fp_salidas')||'[]'); } catch(e){ return []; }
+}
+function saveSalidas(arr) { localStorage.setItem('fp_salidas', JSON.stringify(arr)); }
+function getSalidasActual(modeloId) {
+  // Prioridad: Sheets (ultimasSalidas) + localStorage (pendientes offline)
+  const fromSheets = ultimasSalidas[(modeloId||'').toLowerCase()] || 0;
+  const fromLocal  = getSalidas().filter(d=>d.modeloId===modeloId).reduce((s,d)=>s+(d.cantidad||0),0);
+  return fromSheets + fromLocal;
+}
+
 function getStockActual(modeloId) {
-  return getIngresos()
-    .filter(i => i.modeloId === modeloId)
-    .reduce((sum, i) => sum + (i.cantidad||0), 0);
+  const producido  = getProdPorModelo(modeloId);
+  const ajustes    = getIngresos().filter(i=>i.modeloId===modeloId).reduce((s,i)=>s+(i.cantidad||0),0);
+  const despachado = getSalidasActual(modeloId);
+  return producido + ajustes - despachado;
 }
 
 function getEstado(stock, meta) {
@@ -681,7 +726,13 @@ function renderModelos() {
     const stock = getStockActual(m.id);
     const est   = getEstado(stock, m.meta);
     const pct   = m.meta > 0 ? Math.min(100, Math.round(stock / m.meta * 100)) : 0;
-    const hist  = getIngresos().filter(i=>i.modeloId===m.id).slice(-3).reverse();
+    const prodSheets = getProdPorModelo(m.id);
+    const salidas    = getSalidasActual(m.id);
+    const ajustes    = getIngresos().filter(i=>i.modeloId===m.id).reduce((s,i)=>s+(i.cantidad||0),0);
+    const hist  = [
+      ...getIngresos().filter(i=>i.modeloId===m.id).map(i=>({...i,_tipo:'ing'})),
+      ...getSalidas().filter(d=>d.modeloId===m.id).map(d=>({...d,_tipo:'sal'}))
+    ].sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,4);
     const updTs = m.updTs
       ? new Date(m.updTs).toLocaleString('es-CL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
       : 'Sin configurar';
@@ -692,15 +743,16 @@ function renderModelos() {
         ${hist.map(i=>{
           const d = new Date(i.ts);
           const fecha = d.toLocaleDateString('es-CL',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+          const esSal = i._tipo==='sal';
           return `<div class="ing-item">
             <div class="ing-item-left">
-              <div class="ing-tipo-dot" style="background:${TIPO_ING_COLOR[i.tipo]||'var(--muted)'}"></div>
+              <div class="ing-tipo-dot" style="background:${esSal?'var(--red)':TIPO_ING_COLOR[i.tipo]||'var(--muted)'}"></div>
               <div>
                 <div class="ing-item-info">${TIPO_ING_LABEL[i.tipo]||i.tipo}${i.nota?' · '+escHtml(i.nota):''}</div>
                 <div class="ing-item-meta">${fecha}</div>
               </div>
             </div>
-            <div class="ing-item-cant">+${i.cantidad.toLocaleString('es-CL')}</div>
+            <div class="ing-item-cant" style="color:${esSal?'var(--red)':'var(--green)'}">${esSal?'-':'+'}${i.cantidad.toLocaleString('es-CL')}</div>
           </div>`;
         }).join('')}
       </div>` : '';
@@ -712,20 +764,27 @@ function renderModelos() {
       </div>
       <div class="mod-body">
         <div class="mod-field">
-          <div class="mod-field-lbl">Stock actual</div>
-          <div class="mod-stock-display" id="modStockDisp_${m.id}">${stock.toLocaleString('es-CL')}</div>
-          <div class="mod-stock-calc">unidades · calculado</div>
+          <div class="mod-field-lbl">🏭 Producido</div>
+          <div class="mod-stock-display" style="color:var(--blue)">${prodSheets.toLocaleString('es-CL')}</div>
+          <div class="mod-stock-calc">planilla · período</div>
         </div>
         <div class="mod-field">
-          <div class="mod-field-lbl">Meta de stock</div>
-          <input type="number" min="0" id="modMeta_${m.id}" value="${m.meta}" oninput="actualizarMod('${m.id}')">
-          <div class="mod-unit">unidades</div>
+          <div class="mod-field-lbl">🚚 Despachado</div>
+          <div class="mod-stock-display" style="color:${salidas>0?'var(--red)':'var(--muted)'}">${salidas.toLocaleString('es-CL')}</div>
+          <div class="mod-stock-calc">salidas registradas</div>
         </div>
         <div class="mod-field">
-          <div class="mod-field-lbl">% cubierto</div>
-          <div class="mod-stock-display" id="modPct_${m.id}" style="color:${getBarColor(est)}">${m.meta>0?pct+'%':'—'}</div>
-          <div class="mod-unit">del objetivo</div>
+          <div class="mod-field-lbl">📦 Disponible</div>
+          <div class="mod-stock-display" id="modStockDisp_${m.id}" style="color:${getBarColor(est)}">${stock.toLocaleString('es-CL')}</div>
+          <div class="mod-stock-calc">unidades netas</div>
         </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--fm)">Meta:</div>
+        <input type="number" min="0" id="modMeta_${m.id}" value="${m.meta}" oninput="actualizarMod('${m.id}')"
+          style="background:var(--ink3);border:1px solid var(--brd);color:var(--fog);border-radius:5px;padding:3px 8px;font-size:13px;font-family:var(--fm);outline:none;width:90px">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--fm)">unidades</div>
+        <div style="font-family:var(--fm);font-size:11px;color:${getBarColor(est)};margin-left:auto" id="modPct_${m.id}">${m.meta>0?pct+'% cubierto':'Sin meta'}</div>
       </div>
       <div class="mod-bar-wrap">
         <div class="mod-bar-track">
@@ -734,16 +793,23 @@ function renderModelos() {
       </div>
       <div class="mod-prioridad" id="modPrio_${m.id}">${getPrioridad(est)}</div>
 
+      <!-- ESCANEAR DOCUMENTO -->
+      <input type="file" id="scanInput_${m.id}" accept="image/*" capture="environment" style="display:none"
+        onchange="procesarScan('${m.id}', this.files[0])">
+      <button class="btn-scan" id="btnScan_${m.id}" onclick="escanearDoc('${m.id}')">
+        📸 Escanear guía / factura
+      </button>
+
       <!-- BOTÓN + FORMULARIO DE INGRESO -->
       <button class="btn-ing" onclick="toggleIngreso('${m.id}')">
-        ➕ Registrar ingreso de stock
+        ± Registrar movimiento manual
       </button>
       <div class="ing-form" id="ingForm_${m.id}">
         <div class="ing-row">
           <div class="ing-field">
-            <label>Tipo de ingreso</label>
+            <label>Tipo de movimiento</label>
             <select id="ingTipo_${m.id}">
-              <option value="produccion">🏭 Producción diaria</option>
+              <option value="despacho">🚚 Despacho / Venta</option>
               <option value="compra">🛒 Compra / Recepción</option>
               <option value="devolucion">↩️ Devolución</option>
               <option value="ajuste">⚙️ Ajuste manual</option>
@@ -785,22 +851,45 @@ function toggleIngreso(id) {
   if (f.classList.contains('open')) document.getElementById('ingCant_'+id).focus();
 }
 
-function registrarIngreso(id) {
+async function registrarIngreso(id) {
   const cant = parseInt(document.getElementById('ingCant_'+id).value)||0;
   if (cant <= 0) { alert('Ingresa una cantidad válida'); return; }
   const tipo = document.getElementById('ingTipo_'+id).value;
   const nota = document.getElementById('ingNota_'+id).value.trim();
 
-  const ingresos = getIngresos();
-  ingresos.push({ id: Date.now(), modeloId: id, tipo, cantidad: cant, nota, ts: new Date().toISOString() });
-  saveIngresos(ingresos);
-
-  // Limpiar form y cerrar
   document.getElementById('ingCant_'+id).value = '';
   document.getElementById('ingNota_'+id).value = '';
   document.getElementById('ingForm_'+id).classList.remove('open');
 
-  renderModelos(); // re-render con stock actualizado
+  if (tipo === 'despacho') {
+    // Enviar a Google Sheets para persistencia entre dispositivos
+    const ndoc = nota; // la nota contiene el N° de documento si viene del escáner
+    showToast('⏳ Guardando despacho...');
+    try {
+      const res = await fetch(SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ tipo: 'despacho', modelo: id, cantidad: cant, ndoc, nota: '' })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(`✓ Despacho registrado: ${cant.toLocaleString('es-CL')} ${id}`);
+        cargarDatos(); // recarga Sheets para actualizar stock
+      } else {
+        throw new Error(data.mensaje || 'Error desconocido');
+      }
+    } catch(e) {
+      // Fallback offline: guardar en localStorage
+      const entry = { id: Date.now(), modeloId: id, tipo, cantidad: cant, nota, ts: new Date().toISOString() };
+      const sal = getSalidas(); sal.push(entry); saveSalidas(sal);
+      showToast('⚠️ Sin conexión — despacho guardado localmente');
+      renderModelos();
+    }
+  } else {
+    const entry = { id: Date.now(), modeloId: id, tipo, cantidad: cant, nota, ts: new Date().toISOString() };
+    const ing = getIngresos(); ing.push(entry); saveIngresos(ing);
+    renderModelos();
+  }
 }
 
 function actualizarMod(id) {
@@ -813,7 +902,7 @@ function actualizarMod(id) {
   document.getElementById('modEstado_'+id).className = 'mod-estado '+est;
   document.getElementById('modEstado_'+id).textContent = getEstadoLabel(est);
   document.getElementById('modBar_'+id).style.cssText = `width:${pct}%;background:${getBarColor(est)}`;
-  document.getElementById('modPct_'+id).textContent = meta>0 ? pct+'%' : '—';
+  document.getElementById('modPct_'+id).textContent = meta>0 ? pct+'% cubierto' : 'Sin meta';
   document.getElementById('modPct_'+id).style.color = getBarColor(est);
   document.getElementById('modPrio_'+id).textContent = getPrioridad(est);
 }
@@ -839,6 +928,112 @@ function guardarMod(id) {
       <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
     </svg> Guardar meta`;
   }, 2000);
+}
+
+// ── GEMINI VISION — ESCANEO DE DOCUMENTOS ────────────────────────────
+
+function escanearDoc(modeloId) {
+  let apiKey = localStorage.getItem('fp_gemini_key');
+  if (!apiKey) {
+    apiKey = prompt(
+      '🔑 Ingresa tu API key de Gemini\n\n' +
+      'Obtén una gratis (1.500 consultas/día) en:\nhttps://aistudio.google.com/app/apikey\n\n' +
+      'Se guardará en este dispositivo para la próxima vez.'
+    );
+    if (!apiKey || !apiKey.trim()) return;
+    localStorage.setItem('fp_gemini_key', apiKey.trim());
+  }
+  document.getElementById('scanInput_'+modeloId).click();
+}
+
+async function procesarScan(modeloId, file) {
+  if (!file) return;
+  const apiKey = localStorage.getItem('fp_gemini_key');
+  if (!apiKey) return;
+
+  const btn = document.getElementById('btnScan_'+modeloId);
+  btn.textContent = '⏳ Leyendo documento...';
+  btn.disabled = true;
+
+  try {
+    const base64 = await fileToBase64(file);
+    const mimeType = file.type || 'image/jpeg';
+
+    const prompt = `Analiza este documento (guía de despacho o factura chilena) y extrae:
+1. modelo: solo puede ser exactamente "bloque", "mosaico" o "hilera" según el producto
+2. cantidad: total de unidades despachadas (número entero, busca "cantidad", "bultos", "unidades")
+3. ndoc: número de documento (N° guía, N° factura, folio)
+
+Responde ÚNICAMENTE con JSON válido, sin texto adicional:
+{"modelo":"bloque","cantidad":120,"ndoc":"4521"}
+
+Si no puedes determinar un campo, usa null.`;
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { text: prompt },
+            { inline_data: { mime_type: mimeType, data: base64 } }
+          ]}]
+        })
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      if (err.error?.status === 'INVALID_ARGUMENT' || err.error?.code === 400) {
+        localStorage.removeItem('fp_gemini_key');
+        throw new Error('API key inválida — se borró, intenta de nuevo');
+      }
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    if (!jsonMatch) throw new Error('No se pudo leer el documento');
+
+    const result = JSON.parse(jsonMatch[0]);
+    const modelo = (result.modelo || '').toLowerCase().trim();
+    const cantidad = result.cantidad;
+    const ndoc = result.ndoc;
+
+    // Autodetectó modelo diferente al de la tarjeta actual → abrir la tarjeta correcta
+    const targetId = (['bloque','mosaico','hilera'].includes(modelo)) ? modelo : modeloId;
+
+    // Pre-llenar formulario
+    document.getElementById('ingTipo_'+targetId).value = 'despacho';
+    if (cantidad) document.getElementById('ingCant_'+targetId).value = cantidad;
+    if (ndoc)     document.getElementById('ingNota_'+targetId).value = `Guía/Fac. N°${ndoc}`;
+    document.getElementById('ingForm_'+targetId).classList.add('open');
+
+    const modeloDetectado = modelo !== modeloId
+      ? ` · Modelo: ${modelo}`
+      : '';
+    showToast(`✓ Documento leído${modeloDetectado} · ${cantidad||'?'} und. · N°${ndoc||'?'} — Confirma para registrar`);
+
+  } catch(e) {
+    showToast('❌ ' + e.message);
+    if (e.message.includes('API key')) localStorage.removeItem('fp_gemini_key');
+  }
+
+  btn.textContent = '📸 Escanear guía / factura';
+  btn.disabled = false;
+  // Limpiar el input para permitir volver a escanear el mismo archivo
+  document.getElementById('scanInput_'+modeloId).value = '';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 // ── FECHA TOPBAR ─────────────────────────────────────────────────────
