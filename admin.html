@@ -498,10 +498,10 @@ function renderResumen(data, esDia){
   document.getElementById('cardBonoSub').textContent = '+ trompero →';
 
   // Último día producción registrado
-  const fechas = regs.filter(r=>r.fecha).map(r=>r.fecha).sort();
+  const fechas = regs.filter(r=>r.fecha).map(r=>r.fecha).sort((a,b)=>fechaSort(a).localeCompare(fechaSort(b)));
   if(fechas.length){
     const ult = fechas[fechas.length-1];
-    const dUlt = new Date(ult+'T12:00:00');
+    const dUlt = parseFecha(ult);
     const hoy  = new Date();
     const diffDias = Math.round((hoy-dUlt)/86400000);
     const prodUlt = regs.filter(r=>r.fecha===ult&&(r.rol==='fab'||r.rol==='pas')).reduce((s,r)=>s+r.cant,0);
@@ -692,7 +692,6 @@ function renderPanelFabricados(mesLabel){
   const regs=(ultimosDatos.registros||[]).filter(r=>r.rol==='fab'||r.rol==='pas');
   const total=regs.reduce((s,r)=>s+r.cant,0);
   document.getElementById('pfInfo').textContent=`Total: ${total.toLocaleString('es-CL')} unidades · ${regs.length} registros`;
-  // Bar chart por fabricante
   const map={};
   regs.forEach(r=>{ const nom=WORKERS.find(w=>w.id===r.wid)?.nom||r.nom||r.wid||'—'; map[nom]=(map[nom]||0)+r.cant; });
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
@@ -703,7 +702,6 @@ function renderPanelFabricados(mesLabel){
       <div class="detail-bar-wrap"><div class="detail-bar-fill" style="width:${Math.round(cant/maxV*100)}%"></div></div>
       <div class="detail-val" style="color:var(--blue)">${cant.toLocaleString('es-CL')}</div>
     </div>`).join('');
-  // Rows individuales con anular
   document.getElementById('pfRows').innerHTML=regs.map(r=>{
     const nom=WORKERS.find(w=>w.id===r.wid)?.nom||r.nom||r.wid||'—';
     const tktSafe=(r.tktId||'').replace(/'/g,"\\'");
@@ -727,7 +725,7 @@ function renderPanelDespachos(mesLabel){
   document.getElementById('pdRows').innerHTML=all.map((d,i)=>{
     const fecha=d.ts?new Date(d.ts).toLocaleDateString('es-CL',{day:'numeric',month:'short'}):'del mes';
     const emoji=MOD_EMOJI[d.modeloId]||'📦';
-    const puedeAnular=d.fuente!=='Sheets'; // solo locales se pueden anular desde aquí
+    const puedeAnular=d.fuente!=='Sheets';
     return `<div class="detail-row">
       <div><div class="detail-name">${emoji} ${d.modeloId||'—'}${d.nota?' · '+esc(d.nota):''}</div><div class="detail-sub">${fecha} · ${d.fuente||'local'}</div></div>
       <div class="detail-val" style="color:var(--red)">-${d.cantidad.toLocaleString('es-CL')}</div>
@@ -753,7 +751,6 @@ function renderPanelAV(mesLabel){
   document.getElementById('pavInfo').textContent=`AV total: ${totalAV} · Base para cálculo de bonos trompero`;
   const fabs=(ultimosDatos.registros||[]).filter(r=>r.rol==='fab');
   if(!fabs.length){ document.getElementById('pavRows').innerHTML='<div class="empty"><div style="font-size:12px">Sin fabricantes en el período</div></div>'; return; }
-  // Agrupar por fabricante: sumar total y contar días únicos
   const map={};
   fabs.forEach(r=>{
     const nom=WORKERS.find(w=>w.id===r.wid)?.nom||r.nom||r.wid||'—';
@@ -814,7 +811,6 @@ function renderCalendarioTrompo(dias,year,monthIdx,errorMsg){
   const totalDias=new Date(year,monthIdx+1,0).getDate();
   const primerDia=new Date(year,monthIdx,1).getDay();
   const calStart=(primerDia+6)%7;
-  // Agrupar múltiples entradas por día (Trompero + Ayudante pueden coexistir)
   const diasMap={};
   (dias||[]).forEach(d=>{ if(!diasMap[d.dia]) diasMap[d.dia]=[]; diasMap[d.dia].push(d); });
   const exc=getExcepcionesTrompo(year,monthIdx);
@@ -843,7 +839,6 @@ function renderCalendarioTrompo(dias,year,monthIdx,errorMsg){
   if(errorMsg) html+=`<div style="grid-column:1/-1;font-size:10px;color:var(--muted);font-family:var(--fm);padding:8px 0;text-align:center">⚠️ ${esc(errorMsg)}</div>`;
   document.getElementById('calGrid').innerHTML=html;
 
-  // Resumen debajo del calendario
   const resumenMap={};
   (dias||[]).forEach(d=>{
     const k=d.operador||'?';
@@ -893,6 +888,21 @@ function agregarExcepcionTrompo(){
 // ─── UTILS ────────────────────────────────────────────────────────────
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
+
+// Parsea DD/MM/YYYY o YYYY-MM-DD → Date
+function parseFecha(str){
+  if(!str) return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return new Date(str+'T12:00:00');
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(str)){ const [d,m,y]=str.split('/'); return new Date(`${y}-${m}-${d}T12:00:00`); }
+  return new Date(str);
+}
+// Convierte fecha a YYYY-MM-DD para ordenar correctamente
+function fechaSort(str){
+  if(!str) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(str)){ const [d,m,y]=str.split('/'); return `${y}-${m}-${d}`; }
+  return str;
+}
 
 // ─── FECHA TOPBAR ─────────────────────────────────────────────────────
 function actualizarFecha(){
