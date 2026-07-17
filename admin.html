@@ -553,7 +553,7 @@ function renderResumen(data, esDia){
     const bono=(r.bonoProd||0)+(r.bonoT||0);
     const cantTxt=r.rol==='trp'?`AV:${data.av_total||0}`:r.rol==='trp_a'?`${r.cant} día${r.cant!==1?'s':''}`:`${(r.cant||0).toLocaleString('es-CL')} und.`;
     const bonoFmt=bono>0?`<span class="bono-val pos">$${bono.toLocaleString('es-CL')}</span>`:`<span class="bono-val zero">$0</span>`;
-    const sub=(!esDia&&r.fecha)?`${r.fecha} · ${r.modelo||'—'}`:(r.modelo||'—');
+    const sub=(!esDia&&r.fecha)?`${formatFechaCorta(r.fecha)} · ${r.modelo||'—'}`:(r.modelo||'—');
     const tktSafe=(r.tktId||'').replace(/'/g,"\\'");
     const nomSafe=nom.replace(/'/g,"\\'");
     const widSafe=(r.wid||'').replace(/'/g,"\\'");
@@ -692,6 +692,7 @@ function renderPanelFabricados(mesLabel){
   const regs=(ultimosDatos.registros||[]).filter(r=>r.rol==='fab'||r.rol==='pas');
   const total=regs.reduce((s,r)=>s+r.cant,0);
   document.getElementById('pfInfo').textContent=`Total: ${total.toLocaleString('es-CL')} unidades · ${regs.length} registros`;
+  // Bar chart por fabricante
   const map={};
   regs.forEach(r=>{ const nom=WORKERS.find(w=>w.id===r.wid)?.nom||r.nom||r.wid||'—'; map[nom]=(map[nom]||0)+r.cant; });
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
@@ -702,6 +703,7 @@ function renderPanelFabricados(mesLabel){
       <div class="detail-bar-wrap"><div class="detail-bar-fill" style="width:${Math.round(cant/maxV*100)}%"></div></div>
       <div class="detail-val" style="color:var(--blue)">${cant.toLocaleString('es-CL')}</div>
     </div>`).join('');
+  // Rows individuales con anular
   document.getElementById('pfRows').innerHTML=regs.map(r=>{
     const nom=WORKERS.find(w=>w.id===r.wid)?.nom||r.nom||r.wid||'—';
     const tktSafe=(r.tktId||'').replace(/'/g,"\\'");
@@ -725,7 +727,7 @@ function renderPanelDespachos(mesLabel){
   document.getElementById('pdRows').innerHTML=all.map((d,i)=>{
     const fecha=d.ts?new Date(d.ts).toLocaleDateString('es-CL',{day:'numeric',month:'short'}):'del mes';
     const emoji=MOD_EMOJI[d.modeloId]||'📦';
-    const puedeAnular=d.fuente!=='Sheets';
+    const puedeAnular=d.fuente!=='Sheets'; // solo locales se pueden anular desde aquí
     return `<div class="detail-row">
       <div><div class="detail-name">${emoji} ${d.modeloId||'—'}${d.nota?' · '+esc(d.nota):''}</div><div class="detail-sub">${fecha} · ${d.fuente||'local'}</div></div>
       <div class="detail-val" style="color:var(--red)">-${d.cantidad.toLocaleString('es-CL')}</div>
@@ -751,6 +753,7 @@ function renderPanelAV(mesLabel){
   document.getElementById('pavInfo').textContent=`AV total: ${totalAV} · Base para cálculo de bonos trompero`;
   const fabs=(ultimosDatos.registros||[]).filter(r=>r.rol==='fab');
   if(!fabs.length){ document.getElementById('pavRows').innerHTML='<div class="empty"><div style="font-size:12px">Sin fabricantes en el período</div></div>'; return; }
+  // Agrupar por fabricante: sumar total y contar días únicos
   const map={};
   fabs.forEach(r=>{
     const nom=WORKERS.find(w=>w.id===r.wid)?.nom||r.nom||r.wid||'—';
@@ -811,6 +814,7 @@ function renderCalendarioTrompo(dias,year,monthIdx,errorMsg){
   const totalDias=new Date(year,monthIdx+1,0).getDate();
   const primerDia=new Date(year,monthIdx,1).getDay();
   const calStart=(primerDia+6)%7;
+  // Agrupar múltiples entradas por día (Trompero + Ayudante pueden coexistir)
   const diasMap={};
   (dias||[]).forEach(d=>{ if(!diasMap[d.dia]) diasMap[d.dia]=[]; diasMap[d.dia].push(d); });
   const exc=getExcepcionesTrompo(year,monthIdx);
@@ -839,6 +843,7 @@ function renderCalendarioTrompo(dias,year,monthIdx,errorMsg){
   if(errorMsg) html+=`<div style="grid-column:1/-1;font-size:10px;color:var(--muted);font-family:var(--fm);padding:8px 0;text-align:center">⚠️ ${esc(errorMsg)}</div>`;
   document.getElementById('calGrid').innerHTML=html;
 
+  // Resumen debajo del calendario
   const resumenMap={};
   (dias||[]).forEach(d=>{
     const k=d.operador||'?';
@@ -889,19 +894,33 @@ function agregarExcepcionTrompo(){
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
 
-// Parsea DD/MM/YYYY o YYYY-MM-DD → Date
+// Parsea D/M/YYYY, DD/MM/YYYY, DD-MM-YYYY o YYYY-MM-DD → Date
 function parseFecha(str){
   if(!str) return null;
   if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return new Date(str+'T12:00:00');
-  if(/^\d{2}\/\d{2}\/\d{4}$/.test(str)){ const [d,m,y]=str.split('/'); return new Date(`${y}-${m}-${d}T12:00:00`); }
+  if(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(str)){
+    const sep=str.includes('/')? '/':'-';
+    const [d,m,y]=str.split(sep);
+    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T12:00:00`);
+  }
   return new Date(str);
 }
 // Convierte fecha a YYYY-MM-DD para ordenar correctamente
 function fechaSort(str){
   if(!str) return '';
   if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-  if(/^\d{2}\/\d{2}\/\d{4}$/.test(str)){ const [d,m,y]=str.split('/'); return `${y}-${m}-${d}`; }
+  if(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(str)){
+    const sep=str.includes('/')? '/':'-';
+    const [d,m,y]=str.split(sep);
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
   return str;
+}
+// Formatea fecha para mostrar en UI: "lun 8 jul"
+function formatFechaCorta(str){
+  const d=parseFecha(str);
+  if(!d||isNaN(d)) return str||'—';
+  return d.toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'});
 }
 
 // ─── FECHA TOPBAR ─────────────────────────────────────────────────────
