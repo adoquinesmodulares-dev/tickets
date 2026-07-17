@@ -55,6 +55,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .mode-card.on-prod{border-color:var(--amber);background:rgba(245,158,11,.08)}
 .mode-card.on-otros{border-color:var(--violet);background:rgba(167,139,250,.08)}
 .mode-card.on-pres{border-color:var(--teal);background:rgba(45,212,191,.08)}
+.mode-card.on-desp{border-color:var(--red);background:rgba(239,68,68,.08)}
 /* Presupuesto card full-width */
 .mode-card.mc-pres-full{grid-column:1/-1;display:flex;align-items:center;gap:16px;text-align:left;padding:14px 18px}
 .mc-pres-full .mc-icon{margin-bottom:0;font-size:24px;flex-shrink:0}
@@ -291,6 +292,13 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
       <div class="mc-title">Otros Bonos</div>
       <div class="mc-sub">Bono trompo, salidas, extras</div>
     </div>
+    <div class="mode-card mc-pres-full" id="mc-desp" onclick="setMode('desp')">
+      <div class="mc-icon">🚚</div>
+      <div class="mc-text">
+        <div class="mc-title">Despacho / Salida</div>
+        <div class="mc-sub">Registra salida de stock hacia cliente o destino</div>
+      </div>
+    </div>
     <div class="mode-card mc-pres-full" id="mc-pres" onclick="setMode('pres')">
       <div class="mc-icon">💼</div>
       <div class="mc-text">
@@ -482,6 +490,48 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
   <div class="action-bar">
     <button class="btn btn-back" onclick="goTo(1)">←</button>
     <button class="btn btn-next" onclick="s2bnext()">Ver Resumen →</button>
+  </div>
+</div>
+
+<!-- ════════ PASO 2D: DESPACHO ════════ -->
+<div class="screen" id="s2d">
+  <div class="sh"><h2>Despacho / Salida</h2><p>Registra la salida de stock</p></div>
+
+  <div class="ibox" style="border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06);color:var(--red)">
+    <span>🚚</span>
+    <div>El material <strong>sale</strong> del stock hacia el cliente. Se descuenta automáticamente del inventario.</div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="ph-i">📦</span><span class="ph-t">Detalle del Despacho</span></div>
+    <div class="pb">
+      <div class="frow">
+        <label>Modelo *</label>
+        <select id="despModelo">
+          <option value="Bloque">🧱 Bloque</option>
+          <option value="Mosaico">🔷 Mosaico</option>
+          <option value="Hilera">➖ Hilera</option>
+          <option value="Mixto">📦 Mixto</option>
+        </select>
+      </div>
+      <div class="frow">
+        <label>Cantidad despachada (unidades) *</label>
+        <input type="number" id="despCant" min="1" inputmode="numeric" placeholder="ej: 250" />
+      </div>
+      <div class="frow">
+        <label>Cliente / Destino *</label>
+        <input type="text" id="despDestino" placeholder="Ej: Juan Pérez – Pudahuel" />
+      </div>
+      <div class="frow" style="margin-bottom:0">
+        <label>Nota (opcional)</label>
+        <textarea id="despNota" placeholder="Ej: Entrega parcial, quedan 50 und. pendientes…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-back" onclick="goTo(1)">←</button>
+    <button class="btn btn-next" style="background:linear-gradient(135deg,var(--red),#dc2626)" onclick="s2dnext()">Generar Ticket →</button>
   </div>
 </div>
 
@@ -706,6 +756,21 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
     </div>
   </div>
 
+  <!-- MODO DESPACHO: ticket directo -->
+  <div id="despTicketSection" style="display:none">
+    <div class="ticket" id="despTicketOut"></div>
+    <div class="send-grid">
+      <button class="btn-wa" onclick="openWaDesp()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button class="btn-outline" style="margin-bottom:0" onclick="printDespTicket()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimir
+      </button>
+    </div>
+  </div>
+
   <button class="btn-outline" onclick="resetApp()">+ Registrar Nuevo Turno</button>
   <div style="height:80px"></div>
   <div class="action-bar" style="display:none"></div>
@@ -781,6 +846,7 @@ let S        = { fecha:'', sup:'', obs:'' };
 let appMode  = '';          // 'prod' | 'otros'
 let records  = [];          // producción: { wid, rol, fabT, modelo, cant, bonoProd, bonoT }
 let otros    = [];          // otros bonos: { wid, tipo, lugar, nombre, label, monto, fecha, imponible }
+let despacho = { modelo:'Bloque', cantidad:0, destino:'', nota:'' }; // despacho/salida
 let selRol   = '';
 let fabTOn   = false;       // sub-función fab→trompo
 let selObTipo= '';
@@ -838,6 +904,7 @@ function setMode(m) {
   appMode = m;
   document.getElementById('mc-prod').className  = 'mode-card' + (m==='prod'  ? ' on-prod':'');
   document.getElementById('mc-otros').className = 'mode-card' + (m==='otros' ? ' on-otros':'');
+  document.getElementById('mc-desp').className  = 'mode-card mc-pres-full' + (m==='desp'  ? ' on-desp':'');
   document.getElementById('mc-pres').className  = 'mode-card mc-pres-full' + (m==='pres' ? ' on-pres':'');
 }
 
@@ -862,6 +929,9 @@ function s1next() {
   } else if (appMode === 'otros') {
     updateProgress(['Inicio','Otros Bonos','—','Ticket']);
     goTo('2b');
+  } else if (appMode === 'desp') {
+    updateProgress(['Inicio','Despacho','—','Ticket']);
+    goTo('2d');
   } else {
     updateProgress(['Inicio','Cliente','Zonas','Cotización']);
     presGoStep('A');
@@ -1149,6 +1219,57 @@ function s2bnext() {
   buildOtrosTicket();
   goTo(4);
 }
+
+// ══════════════════════════════════════════════════════
+// PASO 2D: DESPACHO
+// ══════════════════════════════════════════════════════
+function s2dnext() {
+  const modelo  = document.getElementById('despModelo').value;
+  const cant    = parseInt(document.getElementById('despCant').value)||0;
+  const destino = document.getElementById('despDestino').value.trim();
+  const nota    = document.getElementById('despNota').value.trim();
+  if (cant<=0)  { toast('Ingresa la cantidad despachada'); return; }
+  if (!destino) { toast('Ingresa el cliente o destino'); return; }
+  despacho = { modelo, cantidad:cant, destino, nota };
+  _tktId = 'DSP-'+S.fecha.replace(/-/g,'').slice(2)+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  const hora = new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('ticketIdShow').textContent = _tktId+' · '+hora;
+  document.getElementById('prodTicketSection').style.display='none';
+  document.getElementById('otrosTicketSection').style.display='none';
+  document.getElementById('despTicketSection').style.display='block';
+  buildDespTicket();
+  goTo(4);
+}
+
+function buildDespTicket() {
+  const fechaFmt=new Date(S.fecha+'T12:00:00').toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const EMOJIS={Bloque:'🧱',Mosaico:'🔷',Hilera:'➖',Mixto:'📦'};
+  document.getElementById('despTicketOut').innerHTML=`
+    <div class="tkt-head">
+      <div class="tkt-co">Adoquines Modulares SpA</div>
+      <div class="tkt-addr">Av. Lo Espejo 0201, La Cisterna · RUT 77.392.014-1</div>
+      <div class="tkt-id">${_tktId}</div>
+    </div>
+    <hr class="tkt-sep">
+    <div class="tkt-mrow"><span class="k">Fecha:</span><span>${fechaFmt}</span></div>
+    <div class="tkt-mrow"><span class="k">Encargado:</span><span>${S.sup}</span></div>
+    ${S.obs?`<div class="tkt-mrow"><span class="k">Obs.:</span><span>${S.obs}</span></div>`:''}
+    <hr class="tkt-sep">
+    <div class="tkt-section">Detalle del Despacho</div>
+    <div class="tkt-row"><span>${EMOJIS[despacho.modelo]||'📦'} ${despacho.modelo}</span><span style="color:#dc2626;font-weight:700">${despacho.cantidad.toLocaleString('es-CL')} und.</span></div>
+    <div class="tkt-sub">→ ${despacho.destino}</div>
+    ${despacho.nota?`<div class="tkt-sub">📝 ${despacho.nota}</div>`:''}
+    <div class="tkt-total" style="border-top-color:#dc2626"><span>TOTAL DESPACHADO</span><span style="color:#dc2626">${despacho.cantidad.toLocaleString('es-CL')} und.</span></div>
+    <div class="tkt-note">Registro de salida · Generado: ${new Date().toLocaleString('es-CL')}</div>`;
+}
+
+function openWaDesp() {
+  const fFmt=new Date(S.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+  const EMOJIS={Bloque:'🧱',Mosaico:'🔷',Hilera:'➖',Mixto:'📦'};
+  const msg=`*🚚 DESPACHO · ADOQUINES MODULARES*\n*${_tktId}*\n─────────────────────\n📅 ${fFmt}\n👷 Encargado: ${S.sup}\n─────────────────────\n${EMOJIS[despacho.modelo]||'📦'} Modelo: *${despacho.modelo}*\n📦 Cantidad: *${despacho.cantidad.toLocaleString('es-CL')} unidades*\n🏠 Destino: ${despacho.destino}${despacho.nota?'\n📝 '+despacho.nota:''}${S.obs?'\n─────────────────────\n_Obs.: '+S.obs+'_':''}\n─────────────────────\n_Registro de salida de stock_`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
+}
+function printDespTicket() { printHTML(document.getElementById('despTicketOut').outerHTML); }
 
 // ══════════════════════════════════════════════════════
 // PASO 3: RESUMEN
@@ -1470,7 +1591,7 @@ function goTo(id) {
   document.getElementById('s'+id).classList.add('active');
 
   // Progress: map screen to step number
-  const stepMap = {'1':1,'2a':2,'2b':2,'3':3,'4':4};
+  const stepMap = {'1':1,'2a':2,'2b':2,'2d':2,'3':3,'4':4};
   const cur = stepMap[String(id)] || 1;
   for(let i=1;i<=4;i++){
     const dot=document.getElementById('pd'+i), lbl=document.getElementById('pl'+i), line=document.getElementById('pline'+i);
@@ -1484,8 +1605,9 @@ function goTo(id) {
 }
 
 function goBack() {
-  if (appMode==='prod')  goTo('2a');
-  else                   goTo('2b');
+  if (appMode==='prod')       goTo('2a');
+  else if (appMode==='desp')  goTo('2d');
+  else                        goTo('2b');
 }
 
 function updateProgress(labels) {
@@ -1549,6 +1671,19 @@ async function guardarEnPlanilla() {
       });
       payload = { tipo:'prod', tktId:_tktId, fecha:fmtFecha(S.fecha), sup:S.sup, obs:S.obs, records:recs };
 
+    } else if (appMode === 'desp') {
+      payload = {
+        tipo:'despacho',
+        tktId:_tktId,
+        fecha:fmtFecha(S.fecha),
+        sup:S.sup,
+        obs:S.obs,
+        modelo:despacho.modelo,
+        cantidad:despacho.cantidad,
+        destino:despacho.destino,
+        nota:despacho.nota,
+      };
+
     } else {
       const bonos = otros.map(ob => {
         const w = WORKERS.find(x => x.id === ob.wid);
@@ -1606,6 +1741,7 @@ function showSaveStatus(type, msg) {
 
 function resetApp() {
   records=[]; otros=[]; appMode=''; selRol=''; fabTOn=false; selObTipo=''; selObImp=null; _tktId=''; _selKey='';
+  despacho={modelo:'Bloque',cantidad:0,destino:'',nota:''};
   document.getElementById('savedList').innerHTML='';
   document.getElementById('otrosList').innerHTML='';
   document.getElementById('avDisp').textContent='0';
@@ -1613,7 +1749,10 @@ function resetApp() {
   document.getElementById('obFecha').value=new Date().toISOString().slice(0,10);
   document.getElementById('inpSup').value=''; document.getElementById('inpObs').value='';
   document.getElementById('otrosSupRow').style.display='none'; document.getElementById('supManualRow').style.display='none';
-  document.getElementById('mc-prod').className='mode-card'; document.getElementById('mc-otros').className='mode-card'; document.getElementById('mc-pres').className='mode-card mc-pres-full';
+  document.getElementById('mc-prod').className='mode-card'; document.getElementById('mc-otros').className='mode-card'; document.getElementById('mc-desp').className='mode-card mc-pres-full'; document.getElementById('mc-pres').className='mode-card mc-pres-full';
+  const despEl=document.getElementById('despTicketSection'); if(despEl) despEl.style.display='none';
+  ['despCant','despDestino','despNota'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const dm=document.getElementById('despModelo'); if(dm) dm.value='Bloque';
   document.getElementById('rwWorker').value=''; document.getElementById('rwCant').value=''; document.getElementById('rwModelo').value='Bloque';
   ['fab','trp','trp_a','pas'].forEach(r=>{document.getElementById('pill-'+r).className='rpill';});
   document.getElementById('fabtToggle').className='fabt-toggle'; document.getElementById('togFabT').checked=false;
