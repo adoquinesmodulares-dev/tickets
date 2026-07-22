@@ -305,6 +305,40 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
     <div class="empty"><div class="empty-icon">⏳</div><div style="font-size:13px">Cargando datos...</div></div>
   </div>
 
+  <!-- 6B. TENDENCIAS SEMANALES (Bloque 12) -->
+  <div class="sec-head" style="margin-top:18px">
+    <div class="sec-title">📉 Tendencia semanal</div>
+    <span class="sec-count" id="tenCount">últimas 8 semanas</span>
+  </div>
+  <div style="background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:6px" id="tenWrap">
+    <div class="empty" style="padding:10px;background:none;border:none"><div style="font-size:12px">Cargando tendencias…</div></div>
+  </div>
+  <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-bottom:14px">Unidades = fabricantes + pasto · $/und = bono total de la semana ÷ unidades</div>
+
+  <!-- 7. REPORTE POR COLABORADOR (Bloque 9) -->
+  <div class="sec-head" style="margin-top:18px">
+    <div class="sec-title">📈 Reporte por colaborador</div>
+    <span class="sec-count">rango de fechas</span>
+  </div>
+  <div style="background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+      <div>
+        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Colaborador</div>
+        <select id="repNombre" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:8px"><option value="">Todos</option></select>
+      </div>
+      <div>
+        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Desde</div>
+        <input type="date" id="repDesde" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
+      </div>
+      <div>
+        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Hasta</div>
+        <input type="date" id="repHasta" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
+      </div>
+    </div>
+    <button onclick="generarReporte()" id="btnReporte" style="width:100%;background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">📈 Generar Reporte</button>
+    <div id="repOut" style="margin-top:12px"></div>
+  </div>
+
   <!-- Vacaciones y gestión de personas → módulo propio: personas.html -->
 
 </div><!-- /mainDash -->
@@ -967,6 +1001,110 @@ function agregarExcepcionTrompo(){
   showToast(`✓ Excepción agregada: día ${dia} · ${operador.trim()}`);
 }
 
+// ─── TENDENCIAS SEMANALES (Bloque 12) ────────────────────────────────
+async function cargarTendencias(){
+  const wrap=document.getElementById('tenWrap');
+  if(!wrap) return;
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=tendencias&semanas=8`);
+    const d=await res.json();
+    if(!d.ok) throw new Error(d.mensaje||'error');
+    const sem=(d.semanas||[]).filter(s=>s);
+    if(!sem.length || sem.every(s=>!s.unidades&&!s.bono)){
+      wrap.innerHTML='<div class="empty" style="padding:10px;background:none;border:none"><div style="font-size:12px">Sin datos en las últimas semanas</div></div>';
+      return;
+    }
+    const maxU=Math.max(...sem.map(s=>s.unidades),1);
+    wrap.innerHTML=sem.map(s=>{
+      const pct=Math.round(s.unidades/maxU*100);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+        <div style="font-family:var(--fm);font-size:10px;color:var(--muted);width:44px;flex-shrink:0">${s.ini}</div>
+        <div style="flex:1;height:14px;background:var(--ink3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--amber),#d97706);border-radius:4px"></div>
+        </div>
+        <div style="font-family:var(--fm);font-size:11px;color:var(--paper);width:56px;text-align:right;flex-shrink:0">${s.unidades.toLocaleString('es-CL')}</div>
+        <div style="font-family:var(--fm);font-size:10px;color:var(--green);width:88px;text-align:right;flex-shrink:0">$${s.bono.toLocaleString('es-CL')}</div>
+        <div style="font-family:var(--fm);font-size:10px;color:${s.cpu>0?'var(--blue)':'var(--muted)'};width:56px;text-align:right;flex-shrink:0">${s.cpu>0?'$'+s.cpu+'/u':'—'}</div>
+      </div>`;
+    }).join('');
+    // Variación última semana completa vs anterior
+    if(sem.length>=3){
+      const a=sem[sem.length-2], b=sem[sem.length-3];
+      if(b.unidades>0){
+        const v=Math.round((a.unidades-b.unidades)/b.unidades*100);
+        document.getElementById('tenCount').textContent=`sem. pasada: ${v>=0?'+':''}${v}% vs anterior`;
+      }
+    }
+  }catch(e){
+    wrap.innerHTML='<div class="empty" style="padding:10px;background:none;border:none"><div style="font-size:12px">⚠️ Requiere backend actualizado (Bloque 12)</div></div>';
+  }
+}
+
+// ─── REPORTE POR COLABORADOR Y RANGO (Bloque 9) ──────────────────────
+let _ultimoReporte = null;
+
+function poblarRepNombre(){
+  const sel=document.getElementById('repNombre');
+  if(!sel) return;
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Todos</option>';
+  WORKERS.forEach(w=>{ const o=document.createElement('option'); o.value=w.nom; o.textContent=w.nom; sel.appendChild(o); });
+  if(prev && Array.from(sel.options).some(o=>o.value===prev)) sel.value=prev;
+}
+
+async function generarReporte(){
+  const nombre=document.getElementById('repNombre').value;
+  const desde=document.getElementById('repDesde').value;
+  const hasta=document.getElementById('repHasta').value;
+  const out=document.getElementById('repOut');
+  if(!desde||!hasta){ showToast('Selecciona desde y hasta'); return; }
+  const btn=document.getElementById('btnReporte');
+  btn.disabled=true; btn.textContent='⏳ Generando…';
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=reporte&desde=${desde}&hasta=${hasta}&nombre=${encodeURIComponent(nombre)}`);
+    const d=await res.json();
+    if(!d.ok) throw new Error(d.mensaje||'error');
+    _ultimoReporte={...d, nombre, desde, hasta};
+    const regs=d.registros||[];
+    if(!regs.length){
+      out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin registros en ese rango</div></div>';
+    } else {
+      const t=d.totales||{};
+      const filas=regs.map(r=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(53,56,73,.4);font-size:12px">
+        <div><div>${esc(r.fecha)}${nombre?'':' · <strong>'+esc(r.nombre)+'</strong>'}</div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--fm)">${esc(r.funcion)} · ${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</div></div>
+        <div style="font-family:var(--fm);color:var(--green);font-weight:600">$${(r.bono||0).toLocaleString('es-CL')}</div>
+      </div>`).join('');
+      out.innerHTML=`
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:18px;font-weight:800;color:var(--blue)">${(t.unidades||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Unidades</div></div>
+          <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:18px;font-weight:800;color:var(--amber)">${t.dias||0}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Días</div></div>
+          <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:18px;font-weight:800;color:var(--green)">$${(t.bono||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Bono est.</div></div>
+        </div>
+        ${filas}
+        <button onclick="reporteWA()" style="width:100%;margin-top:10px;background:#25D366;border:none;border-radius:6px;color:#fff;font-weight:700;font-size:12px;padding:9px;cursor:pointer">📱 Enviar por WhatsApp</button>`;
+    }
+  }catch(e){
+    out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">⚠️ '+esc(e.message)+'</div></div>';
+  }
+  btn.disabled=false; btn.textContent='📈 Generar Reporte';
+}
+
+function reporteWA(){
+  if(!_ultimoReporte) return;
+  const d=_ultimoReporte, t=d.totales||{};
+  const fmtF=s=>{const p=s.split('-');return `${p[2]}/${p[1]}/${p[0]}`;};
+  let msg=`📈 *Reporte de Producción*\n${d.nombre?'👷 *'+d.nombre+'*\n':''}📅 ${fmtF(d.desde)} → ${fmtF(d.hasta)}\n─────────────────────\n`;
+  (d.registros||[]).forEach(r=>{
+    msg+=`${r.fecha}${d.nombre?'':' · '+r.nombre}: ${r.modelo&&r.modelo!=='—'?r.modelo+' ':''}${(r.unidades||0).toLocaleString('es-CL')} und. → $${(r.bono||0).toLocaleString('es-CL')}\n`;
+  });
+  msg+=`─────────────────────\n📦 Total: *${(t.unidades||0).toLocaleString('es-CL')} und.* en ${t.dias||0} día${t.dias!==1?'s':''}\n💰 Bono estimado: *$${(t.bono||0).toLocaleString('es-CL')}*\n─────────────────────\n_FlowPoint Ops · Adoquines Modulares_`;
+  // Si hay colaborador específico con teléfono real → directo a su chat
+  const w=WORKERS.find(x=>x.nom===d.nombre);
+  const tel=(w&&w.tel&&!/^569000000/.test(w.tel))?w.tel:'';
+  window.open(`https://wa.me/${tel}?text=`+encodeURIComponent(msg),'_blank');
+}
+
 // ─── Vacaciones → movidas al módulo Personas (personas.html) ──────────
 
 // ─── UTILS ────────────────────────────────────────────────────────────
@@ -1024,12 +1162,15 @@ function iniciar(){
   // Nómina real desde Sheets (Bloque 3) — respaldo local si no hay conexión
   fetch(`${SHEETS_URL}?action=config`).then(r=>r.json()).then(d=>{
     if(d.ok && Array.isArray(d.workers) && d.workers.length){
-      WORKERS = d.workers.map(w=>({ id:_slugNom(w.nom), nom:w.nom }));
+      WORKERS = d.workers.map(w=>({ id:_slugNom(w.nom), nom:w.nom, tel:String(w.tel||'') }));
     }
-  }).catch(()=>{});
+    poblarRepNombre();
+  }).catch(()=>poblarRepNombre());
   cargarAdminData();   // avisos, stock manual y excepciones desde Sheets
   cargarDatos();
+  cargarTendencias();
   setInterval(cargarDatos,5*60*1000);
+  setInterval(cargarTendencias,15*60*1000);
 }
 iniciar();
 </script>

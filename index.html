@@ -315,6 +315,13 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
         <div class="mc-sub">Genera y envía una cotización al cliente</div>
       </div>
     </div>
+    <div class="mode-card mc-pres-full" id="mc-asis" onclick="setMode('asis')">
+      <div class="mc-icon">🗓️</div>
+      <div class="mc-text">
+        <div class="mc-title">Asistencia</div>
+        <div class="mc-sub">Pasa lista del día en 30 segundos</div>
+      </div>
+    </div>
   </div>
 
   <div class="panel">
@@ -515,6 +522,13 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
     <div class="ph"><span class="ph-i">📦</span><span class="ph-t">Detalle del Despacho</span></div>
     <div class="pb">
       <div class="frow">
+        <label>🤖 Escanear guía o factura con IA (opcional)</label>
+        <label class="foto-lbl" for="scanInput" id="scanLbl">
+          <span>📷</span> Foto o PDF del documento — llena el formulario solo
+        </label>
+        <input type="file" id="scanInput" accept="image/*,application/pdf" style="display:none" onchange="escanearGuia(this)">
+      </div>
+      <div class="frow">
         <label>Pedido asociado (opcional)</label>
         <select id="despPedido">
           <option value="">— Sin pedido / venta directa —</option>
@@ -553,6 +567,27 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
   <div class="action-bar">
     <button class="btn btn-back" onclick="goTo(1)">←</button>
     <button class="btn btn-next" style="background:linear-gradient(135deg,var(--red),#dc2626)" onclick="s2dnext()">Generar Ticket →</button>
+  </div>
+</div>
+
+<!-- ════════ PASO 2E: ASISTENCIA (Bloque 10) ════════ -->
+<div class="screen" id="s2e">
+  <div class="sh"><h2>Asistencia del Día</h2><p>Marca a cada colaborador — Presente, Atraso o Ausente</p></div>
+
+  <div class="ibox">
+    <span>ℹ</span>
+    <div>Complemento operativo del día. La marcación legal sigue siendo GeoVictoria.</div>
+  </div>
+
+  <div id="asisLista"></div>
+
+  <div class="calc-box" id="asisResumen">— Marca al menos un colaborador —</div>
+  <div id="asisStatus" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:12px"></div>
+  <button class="btn-summary" id="btnAsisWa" style="display:none;margin-top:8px" onclick="asistenciaWA()">📱 Enviar resumen por WhatsApp</button>
+
+  <div class="action-bar">
+    <button class="btn btn-back" onclick="goTo(1)">←</button>
+    <button class="btn btn-ok" id="btnAsisSave" onclick="guardarAsistencia()">✓ Guardar Asistencia</button>
   </div>
 </div>
 
@@ -993,6 +1028,8 @@ function setMode(m) {
   document.getElementById('mc-otros').className = 'mode-card' + (m==='otros' ? ' on-otros':'');
   document.getElementById('mc-desp').className  = 'mode-card mc-pres-full' + (m==='desp'  ? ' on-desp':'');
   document.getElementById('mc-pres').className  = 'mode-card mc-pres-full' + (m==='pres' ? ' on-pres':'');
+  const mca=document.getElementById('mc-asis');
+  if(mca) mca.className = 'mode-card mc-pres-full' + (m==='asis' ? ' on-prod':'');
 }
 
 function getSup() {
@@ -1020,6 +1057,10 @@ function s1next() {
     updateProgress(['Inicio','Despacho','—','Ticket']);
     cargarPedidosDespacho();
     goTo('2d');
+  } else if (appMode === 'asis') {
+    updateProgress(['Inicio','Asistencia','—','Listo']);
+    cargarAsistenciaLista();
+    goTo('2e');
   } else {
     updateProgress(['Inicio','Cliente','Zonas','Cotización']);
     presGoStep('A');
@@ -1709,7 +1750,7 @@ function goTo(id) {
   document.getElementById('s'+id).classList.add('active');
 
   // Progress: map screen to step number
-  const stepMap = {'1':1,'2a':2,'2b':2,'2d':2,'3':3,'4':4};
+  const stepMap = {'1':1,'2a':2,'2b':2,'2d':2,'2e':2,'3':3,'4':4};
   const cur = stepMap[String(id)] || 1;
   for(let i=1;i<=4;i++){
     const dot=document.getElementById('pd'+i), lbl=document.getElementById('pl'+i), line=document.getElementById('pline'+i);
@@ -1841,6 +1882,119 @@ async function guardarEnPlanilla() {
   }
 }
 
+// ══════════════════════════════════════════════════════
+// ASISTENCIA DIARIA (Bloque 10) — el supervisor pasa lista
+// ══════════════════════════════════════════════════════
+let asisMarcas = {};   // nombre → 'Presente' | 'Atraso' | 'Ausente'
+
+function cargarAsistenciaLista(){
+  asisMarcas = {};
+  const c = document.getElementById('asisLista');
+  c.innerHTML = WORKERS.map(w=>`
+    <div class="saved-item" style="border-color:var(--brd)">
+      <div class="si-head">
+        <div class="si-left"><div class="si-n">${w.nom}</div></div>
+        <div class="pills" style="gap:5px">
+          <div class="rpill" id="ap-${w.id}-P" onclick="setAsis('${w.id}','${w.nom.replace(/'/g,"\\'")}','Presente')">✓</div>
+          <div class="rpill" id="ap-${w.id}-A" onclick="setAsis('${w.id}','${w.nom.replace(/'/g,"\\'")}','Atraso')">⏰</div>
+          <div class="rpill" id="ap-${w.id}-X" onclick="setAsis('${w.id}','${w.nom.replace(/'/g,"\\'")}','Ausente')">✕</div>
+        </div>
+      </div>
+    </div>`).join('');
+  actualizarAsisResumen();
+  document.getElementById('asisStatus').style.display='none';
+  document.getElementById('btnAsisWa').style.display='none';
+  const btn=document.getElementById('btnAsisSave');
+  btn.disabled=false; btn.textContent='✓ Guardar Asistencia';
+}
+
+function setAsis(wid, nom, estado){
+  asisMarcas[nom] = estado;
+  const cls = { Presente:'sel-fab', Atraso:'sel-pas', Ausente:'sel-trp' };
+  const key = { Presente:'P', Atraso:'A', Ausente:'X' };
+  ['P','A','X'].forEach(k=>{
+    const el=document.getElementById(`ap-${wid}-${k}`);
+    if(el) el.className='rpill'+(k===key[estado]?' '+cls[estado]:'');
+  });
+  actualizarAsisResumen();
+}
+
+function actualizarAsisResumen(){
+  const vals=Object.values(asisMarcas);
+  const p=vals.filter(v=>v==='Presente').length,
+        a=vals.filter(v=>v==='Atraso').length,
+        x=vals.filter(v=>v==='Ausente').length;
+  const el=document.getElementById('asisResumen');
+  if(!vals.length){ el.textContent='— Marca al menos un colaborador —'; el.className='calc-box'; return; }
+  el.textContent=`✓ ${p} presente${p!==1?'s':''} · ⏰ ${a} atraso${a!==1?'s':''} · ✕ ${x} ausente${x!==1?'s':''} — ${vals.length}/${WORKERS.length} marcados`;
+  el.className='calc-box ok';
+}
+
+async function guardarAsistencia(){
+  const marcas=Object.keys(asisMarcas).map(nom=>({nombre:nom, estado:asisMarcas[nom]}));
+  if(!marcas.length){ toast('Marca al menos un colaborador'); return; }
+  const btn=document.getElementById('btnAsisSave');
+  btn.disabled=true; btn.textContent='⏳ Guardando…';
+  _tktId='ASI-'+S.fecha.replace(/-/g,'').slice(2)+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  const payload={ tipo:'asistencia', tktId:_tktId, fecha:fmtFecha(S.fecha), sup:S.sup, marcas };
+  encolar(payload);
+  await procesarCola(true);
+  const st=document.getElementById('asisStatus');
+  st.style.display='block';
+  if(!enCola(_tktId)){
+    st.style.cssText+=';background:rgba(34,197,94,.12);color:#22c55e;border:1px solid rgba(34,197,94,.3)';
+    st.textContent='✅ Asistencia guardada en Google Sheets';
+    btn.textContent='✅ Guardada';
+  } else {
+    st.style.cssText+=';background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.3)';
+    st.textContent='📥 Sin señal — quedó guardada en el teléfono y se enviará sola';
+    btn.textContent='📥 Guardada local';
+  }
+  document.getElementById('btnAsisWa').style.display='block';
+}
+
+function asistenciaWA(){
+  const fFmt=new Date(S.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+  const EMO={Presente:'✓',Atraso:'⏰',Ausente:'✕'};
+  let msg=`*🗓️ ASISTENCIA · ADOQUINES MODULARES*\n📅 ${fFmt}\n👷 Encargado: ${S.sup}\n─────────────────────\n`;
+  Object.keys(asisMarcas).forEach(nom=>{ msg+=`${EMO[asisMarcas[nom]]} ${nom}: ${asisMarcas[nom]}\n`; });
+  const vals=Object.values(asisMarcas);
+  msg+=`─────────────────────\nPresentes: *${vals.filter(v=>v==='Presente').length}* · Atrasos: *${vals.filter(v=>v==='Atraso').length}* · Ausentes: *${vals.filter(v=>v==='Ausente').length}*\n_FlowPoint Ops_`;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ── ESCÁNER IA DE GUÍAS (Bloque 11) ──
+async function escanearGuia(inp){
+  const f = inp.files && inp.files[0];
+  if (!f) return;
+  if (f.size > 8*1024*1024){ toast('Archivo muy grande (máx 8 MB)'); inp.value=''; return; }
+  const lbl = document.getElementById('scanLbl');
+  lbl.innerHTML = '<span>⏳</span> Leyendo documento con IA…';
+  const b64 = await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.readAsDataURL(f); });
+  try{
+    const res = await fetch(SHEETS_URL, { method:'POST', body: JSON.stringify({
+      tipo:'escanear', token:APP_TOKEN,
+      imagen:{ mime:f.type||'image/jpeg', base64:b64 },
+    })});
+    const d = await res.json();
+    if (!d.ok){ toast('No se pudo leer: '+(d.mensaje||'intenta manual')); lbl.innerHTML='<span>📷</span> Foto o PDF del documento — llena el formulario solo'; inp.value=''; return; }
+    const dat = d.datos||{};
+    const map = { bloque:'despCantBloque', mosaico:'despCantMosaico', hilera:'despCantHilera' };
+    (dat.items||[]).forEach(it=>{
+      const id = map[String(it.modelo||'').trim().toLowerCase()];
+      if (id && Number(it.cantidad)>0) document.getElementById(id).value = Number(it.cantidad);
+    });
+    if (dat.destino) document.getElementById('despDestino').value = String(dat.destino);
+    if (dat.nota)    document.getElementById('despNota').value    = String(dat.nota);
+    lbl.innerHTML = '<span>✅</span> Documento leído — revisa y corrige antes de continuar';
+    toast('✓ Datos cargados desde el documento');
+  }catch(e){
+    toast('Sin conexión — completa manual');
+    lbl.innerHTML='<span>📷</span> Foto o PDF del documento — llena el formulario solo';
+  }
+  inp.value='';
+}
+
 // ── PEDIDOS ABIERTOS EN DESPACHO (Bloque 5) ──
 async function cargarPedidosDespacho(){
   const sel = document.getElementById('despPedido');
@@ -1942,6 +2096,8 @@ function resetApp() {
   document.getElementById('inpSup').value=''; document.getElementById('inpObs').value='';
   document.getElementById('otrosSupRow').style.display='none'; document.getElementById('supManualRow').style.display='none';
   document.getElementById('mc-prod').className='mode-card'; document.getElementById('mc-otros').className='mode-card'; document.getElementById('mc-desp').className='mode-card mc-pres-full'; document.getElementById('mc-pres').className='mode-card mc-pres-full';
+  const mcaR=document.getElementById('mc-asis'); if(mcaR) mcaR.className='mode-card mc-pres-full';
+  asisMarcas={};
   const despEl=document.getElementById('despTicketSection'); if(despEl) despEl.style.display='none';
   ['despCantBloque','despCantMosaico','despCantHilera','despDestino','despNota'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const dp=document.getElementById('despPedido'); if(dp) dp.value='';
