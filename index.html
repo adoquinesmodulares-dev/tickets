@@ -239,6 +239,13 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
 .btn-ghost{background:var(--ink3);border:1.5px solid var(--brd);color:var(--fog)}
 
 @media(max-width:360px){.fg2{grid-template-columns:1fr}.send-grid{grid-template-columns:1fr}.mode-grid{grid-template-columns:1fr}}
+
+/* ── FOTO UPLOAD ── */
+.foto-upload{display:flex;flex-direction:column;gap:8px}
+.foto-lbl{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--ink3);border:1.5px dashed var(--brd);border-radius:var(--r);cursor:pointer;color:var(--fog);font-size:13px;transition:border-color .2s,color .2s;user-select:none}
+.foto-lbl:hover,.foto-lbl:active{border-color:var(--amber);color:var(--amber)}
+.foto-preview{width:100%;border-radius:var(--r);border:1px solid var(--brd);object-fit:cover;max-height:220px}
+.foto-rm{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:2px 0;text-align:left;font-family:var(--fb)}
 </style>
 </head>
 <body>
@@ -253,6 +260,8 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
     </svg>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
+    <span id="colaBadge" onclick="procesarCola()" style="display:none;align-items:center;font-size:11px;font-family:var(--fm);color:var(--amber);border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.1);padding:4px 9px;border-radius:5px;cursor:pointer"></span>
+    <a href="./portal.html" style="font-size:11px;font-family:var(--fm);color:var(--muted);text-decoration:none;border:1px solid var(--brd);padding:4px 9px;border-radius:5px;transition:all .2s" onmouseover="this.style.color='var(--amber)';this.style.borderColor='var(--amber)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--brd)'">👷 Portal</a>
     <a href="./admin.html" style="font-size:11px;font-family:var(--fm);color:var(--muted);text-decoration:none;border:1px solid var(--brd);padding:4px 9px;border-radius:5px;transition:all .2s" onmouseover="this.style.color='var(--amber)';this.style.borderColor='var(--amber)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--brd)'">📊 Admin</a>
     <div>
       <div class="top-date" id="topDate">—</div>
@@ -346,7 +355,7 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
 
   <div class="ibox warn">
     <span>⚡</span>
-    <div>Fab: mín. <strong>30 × $900</strong> &nbsp;·&nbsp; Tromp. Maestro: <strong>AV × $75</strong> &nbsp;·&nbsp; Ay. Trompo: <strong>día × $10.000</strong> &nbsp;·&nbsp; Pasto: mín. <strong>40 × $500</strong></div>
+    <div id="tarifasInfo">Fab: mín. <strong>30 × $900</strong> &nbsp;·&nbsp; Tromp. Maestro: <strong>AV × $75</strong> &nbsp;·&nbsp; Ay. Trompo: <strong>día × $10.000</strong> &nbsp;·&nbsp; Pasto: mín. <strong>40 × $500</strong></div>
   </div>
 
   <div class="av-bar">
@@ -506,25 +515,37 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
     <div class="ph"><span class="ph-i">📦</span><span class="ph-t">Detalle del Despacho</span></div>
     <div class="pb">
       <div class="frow">
-        <label>Modelo *</label>
-        <select id="despModelo">
-          <option value="Bloque">🧱 Bloque</option>
-          <option value="Mosaico">🔷 Mosaico</option>
-          <option value="Hilera">➖ Hilera</option>
-          <option value="Mixto">📦 Mixto</option>
+        <label>Pedido asociado (opcional)</label>
+        <select id="despPedido">
+          <option value="">— Sin pedido / venta directa —</option>
         </select>
       </div>
       <div class="frow">
-        <label>Cantidad despachada (unidades) *</label>
-        <input type="number" id="despCant" min="1" inputmode="numeric" placeholder="ej: 250" />
+        <label>Cantidades por modelo — deja en 0 las que no van *</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px">
+          <div><label>🧱 Bloque</label><input type="number" id="despCantBloque" min="0" inputmode="numeric" placeholder="0" /></div>
+          <div><label>🔷 Mosaico</label><input type="number" id="despCantMosaico" min="0" inputmode="numeric" placeholder="0" /></div>
+          <div><label>➖ Hilera</label><input type="number" id="despCantHilera" min="0" inputmode="numeric" placeholder="0" /></div>
+        </div>
       </div>
       <div class="frow">
         <label>Cliente / Destino *</label>
         <input type="text" id="despDestino" placeholder="Ej: Juan Pérez – Pudahuel" />
       </div>
-      <div class="frow" style="margin-bottom:0">
+      <div class="frow">
         <label>Nota (opcional)</label>
         <textarea id="despNota" placeholder="Ej: Entrega parcial, quedan 50 und. pendientes…"></textarea>
+      </div>
+      <div class="frow" style="margin-bottom:0">
+        <label>Foto del despacho (opcional)</label>
+        <div class="foto-upload">
+          <label class="foto-lbl" for="despFotoInput">
+            <span>📷</span> Tomar o adjuntar foto
+          </label>
+          <input type="file" id="despFotoInput" accept="image/*" capture="environment" style="display:none" onchange="onDespFoto(this)">
+          <img id="despFotoPreview" class="foto-preview" style="display:none" />
+          <button id="despFotoRemove" class="foto-rm" style="display:none" onclick="removeDespFoto()">✕ Quitar foto</button>
+        </div>
       </div>
     </div>
   </div>
@@ -808,7 +829,9 @@ input[type="number"]::-webkit-inner-spin-button{opacity:0}
 // ══════════════════════════════════════════════════════
 // ⚠️  Reemplaza tel con el número real de cada trabajador
 //     Formato: '569XXXXXXXX'
-const WORKERS = [
+// ⚠️ Desde el Bloque 3 esta lista es solo RESPALDO offline: la nómina real
+//    se carga desde la hoja "Personal" de Google Sheets al abrir la app.
+let WORKERS = [
   { id:'yoel',       nom:'Yoel Yévenes',        tel:'56942830033' },
   { id:'cristhian',  nom:'Cristhian González',  tel:'56900000005' },
   { id:'yerlinton',  nom:'Yerlinton Rivas',     tel:'56900000009' },
@@ -819,6 +842,7 @@ const WORKERS = [
   { id:'mauricio',   nom:'Mauricio Villa',      tel:'56955204989' },
   { id:'benjamin',   nom:'Benjamín Catalán',    tel:'56956061296' },
   { id:'mauricio_c', nom:'Mauricio Casas',      tel:'56975457948' },
+  { id:'cristian_p', nom:'Cristián Pizarro',    tel:'56929215870' },
 ];
 
 // ══════════════════════════════════════════════════════
@@ -827,8 +851,11 @@ const WORKERS = [
 // ⚠️  Reemplaza esta URL con la de tu Apps Script
 //     (Implementar → Nueva implementación → Aplicación web → URL)
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
+// Token compartido con el Apps Script — debe coincidir con APP_TOKEN en el backend
+const APP_TOKEN = 'fp-adoq-2026';
 
-const C = {
+// ⚠️ Tarifas de RESPALDO — las reales se cargan desde la hoja "Config"
+let C = {
   FAB_MIN:30,  FAB_RATE:900,    // fabricante puro
   FABT_RATE:150,                 // fabricante que también fue al trompo × AV
   TRP_RATE:75,                   // trompero maestro × AV (AV solo de fabricantes puros)
@@ -846,7 +873,7 @@ let S        = { fecha:'', sup:'', obs:'' };
 let appMode  = '';          // 'prod' | 'otros'
 let records  = [];          // producción: { wid, rol, fabT, modelo, cant, bonoProd, bonoT }
 let otros    = [];          // otros bonos: { wid, tipo, lugar, nombre, label, monto, fecha, imponible }
-let despacho = { modelo:'Bloque', cantidad:0, destino:'', nota:'' }; // despacho/salida
+let despacho = { items:[], total:0, destino:'', nota:'', foto:null, pedidoId:'' }; // despacho/salida (B8: multi-modelo)
 let selRol   = '';
 let fabTOn   = false;       // sub-función fab→trompo
 let selObTipo= '';
@@ -857,10 +884,17 @@ let _selKey  = '';          // key en selWorkerTicket: "wid"
 // ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
+// Fecha local en formato YYYY-MM-DD (evita bug UTC: después de las 20:00
+// en Chile toISOString() devuelve la fecha del día siguiente)
+function hoyLocal(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
 function init() {
   const now = new Date();
-  document.getElementById('inpFecha').value = now.toISOString().slice(0,10);
-  document.getElementById('obFecha').value  = now.toISOString().slice(0,10);
+  document.getElementById('inpFecha').value = hoyLocal(now);
+  document.getElementById('obFecha').value  = hoyLocal(now);
   refreshDate(now);
 
   document.getElementById('inpFecha').addEventListener('input', e => {
@@ -873,21 +907,74 @@ function init() {
     if (v!=='__otros__') document.getElementById('inpSupManual').value='';
   });
 
-  // Populate dropdowns
+  // Populate dropdowns (respaldo local) y luego cargar nómina/tarifas reales
+  repoblarSelects();
+  cargarConfig();
+
+  // Cola offline (Bloque 4): sincronizar pendientes al abrir, al volver
+  // la señal y cada 90 segundos
+  actualizarColaBadge();
+  procesarCola();
+  window.addEventListener('online', () => procesarCola());
+  setInterval(() => procesarCola(true), 90*1000);
+}
+
+// ══════════════════════════════════════════════════════
+// CONFIG DINÁMICA (Bloque 3): nómina y tarifas desde Sheets
+// ══════════════════════════════════════════════════════
+function slugNom(n){
+  return String(n||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
+
+function repoblarSelects(){
   ['rwWorker','obWorker'].forEach(id => {
     const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Seleccionar —</option>';
     WORKERS.forEach(w => {
       const o = document.createElement('option');
       o.value = w.id; o.textContent = w.nom;
       sel.appendChild(o);
     });
-    // Opción manual al final (solo para selector de producción)
     if (id === 'rwWorker') {
       const o = document.createElement('option');
       o.value = '__otro__'; o.textContent = 'Otro colaborador…';
       sel.appendChild(o);
     }
+    if (prev && Array.from(sel.options).some(o=>o.value===prev)) sel.value = prev;
   });
+}
+
+function actualizarInfoTarifas(){
+  const el = document.getElementById('tarifasInfo');
+  if (!el) return;
+  el.innerHTML = `Fab: mín. <strong>${C.FAB_MIN} × $${C.FAB_RATE.toLocaleString('es-CL')}</strong> &nbsp;·&nbsp; Tromp. Maestro: <strong>AV × $${C.TRP_RATE.toLocaleString('es-CL')}</strong> &nbsp;·&nbsp; Ay. Trompo: <strong>día × $${C.TRP_AYU_RATE.toLocaleString('es-CL')}</strong> &nbsp;·&nbsp; Pasto: mín. <strong>${C.PAS_MIN} × $${C.PAS_RATE.toLocaleString('es-CL')}</strong>`;
+}
+
+async function cargarConfig(){
+  try{
+    const res = await fetch(SHEETS_URL + '?action=config');
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.mensaje || 'config no disponible');
+    if (Array.isArray(d.workers) && d.workers.length) {
+      WORKERS = d.workers.map(w => ({ id:slugNom(w.nom), nom:w.nom, tel:String(w.tel||'') }));
+      repoblarSelects();
+    }
+    if (d.tarifas) Object.keys(C).forEach(k => { if (typeof d.tarifas[k] === 'number') C[k] = d.tarifas[k]; });
+    actualizarInfoTarifas();
+    try{ localStorage.setItem('fp_config', JSON.stringify({ workers:WORKERS, tarifas:C, ts:Date.now() })); }catch(e){}
+  }catch(e){
+    // Sin conexión o backend sin Bloque 3: usar última config conocida
+    try{
+      const c = JSON.parse(localStorage.getItem('fp_config')||'null');
+      if (c) {
+        if (Array.isArray(c.workers) && c.workers.length) WORKERS = c.workers;
+        if (c.tarifas) Object.assign(C, c.tarifas);
+        repoblarSelects(); actualizarInfoTarifas();
+      }
+    }catch(_){}
+  }
 }
 
 function refreshDate(d) {
@@ -931,6 +1018,7 @@ function s1next() {
     goTo('2b');
   } else if (appMode === 'desp') {
     updateProgress(['Inicio','Despacho','—','Ticket']);
+    cargarPedidosDespacho();
     goTo('2d');
   } else {
     updateProgress(['Inicio','Cliente','Zonas','Cotización']);
@@ -1176,7 +1264,7 @@ function saveOtro() {
 
   // Reset form
   document.getElementById('obWorker').value=''; document.getElementById('obMonto').value='';
-  document.getElementById('obFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('obFecha').value=hoyLocal();
   document.getElementById('obLugar').value=''; document.getElementById('obNombre').value='';
   document.getElementById('obLugarRow').style.display='none'; document.getElementById('obNombreRow').style.display='none';
   selObTipo=''; selObImp=null;
@@ -1224,13 +1312,19 @@ function s2bnext() {
 // PASO 2D: DESPACHO
 // ══════════════════════════════════════════════════════
 function s2dnext() {
-  const modelo  = document.getElementById('despModelo').value;
-  const cant    = parseInt(document.getElementById('despCant').value)||0;
+  // Bloque 8: despacho unificado — varios modelos en un solo despacho
+  const items = [
+    { modelo:'Bloque',  cantidad: parseInt(document.getElementById('despCantBloque').value)||0 },
+    { modelo:'Mosaico', cantidad: parseInt(document.getElementById('despCantMosaico').value)||0 },
+    { modelo:'Hilera',  cantidad: parseInt(document.getElementById('despCantHilera').value)||0 },
+  ].filter(it => it.cantidad > 0);
   const destino = document.getElementById('despDestino').value.trim();
   const nota    = document.getElementById('despNota').value.trim();
-  if (cant<=0)  { toast('Ingresa la cantidad despachada'); return; }
-  if (!destino) { toast('Ingresa el cliente o destino'); return; }
-  despacho = { modelo, cantidad:cant, destino, nota };
+  if (!items.length) { toast('Ingresa al menos una cantidad'); return; }
+  if (!destino)      { toast('Ingresa el cliente o destino'); return; }
+  despacho = { items, total: items.reduce((s,it)=>s+it.cantidad,0),
+               destino, nota, foto: despacho.foto || null,
+               pedidoId: document.getElementById('despPedido') ? document.getElementById('despPedido').value : '' };
   _tktId = 'DSP-'+S.fecha.replace(/-/g,'').slice(2)+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
   const hora = new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('ticketIdShow').textContent = _tktId+' · '+hora;
@@ -1256,20 +1350,44 @@ function buildDespTicket() {
     ${S.obs?`<div class="tkt-mrow"><span class="k">Obs.:</span><span>${S.obs}</span></div>`:''}
     <hr class="tkt-sep">
     <div class="tkt-section">Detalle del Despacho</div>
-    <div class="tkt-row"><span>${EMOJIS[despacho.modelo]||'📦'} ${despacho.modelo}</span><span style="color:#dc2626;font-weight:700">${despacho.cantidad.toLocaleString('es-CL')} und.</span></div>
+    ${despacho.items.map(it=>`<div class="tkt-row"><span>${EMOJIS[it.modelo]||'📦'} ${it.modelo}</span><span style="color:#dc2626;font-weight:700">${it.cantidad.toLocaleString('es-CL')} und.</span></div>`).join('')}
     <div class="tkt-sub">→ ${despacho.destino}</div>
+    ${despacho.pedidoId?`<div class="tkt-sub">🧾 Pedido: ${despacho.pedidoId}</div>`:''}
     ${despacho.nota?`<div class="tkt-sub">📝 ${despacho.nota}</div>`:''}
-    <div class="tkt-total" style="border-top-color:#dc2626"><span>TOTAL DESPACHADO</span><span style="color:#dc2626">${despacho.cantidad.toLocaleString('es-CL')} und.</span></div>
+    ${despacho.foto?`<div style="margin:10px 0;text-align:center"><img src="${despacho.foto}" style="max-width:100%;border-radius:6px;border:1px solid rgba(255,255,255,.12);max-height:200px;object-fit:cover" /></div>`:''}
+    <div class="tkt-total" style="border-top-color:#dc2626"><span>TOTAL DESPACHADO</span><span style="color:#dc2626">${despacho.total.toLocaleString('es-CL')} und.</span></div>
     <div class="tkt-note">Registro de salida · Generado: ${new Date().toLocaleString('es-CL')}</div>`;
 }
 
 function openWaDesp() {
   const fFmt=new Date(S.fecha+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
   const EMOJIS={Bloque:'🧱',Mosaico:'🔷',Hilera:'➖',Mixto:'📦'};
-  const msg=`*🚚 DESPACHO · ADOQUINES MODULARES*\n*${_tktId}*\n─────────────────────\n📅 ${fFmt}\n👷 Encargado: ${S.sup}\n─────────────────────\n${EMOJIS[despacho.modelo]||'📦'} Modelo: *${despacho.modelo}*\n📦 Cantidad: *${despacho.cantidad.toLocaleString('es-CL')} unidades*\n🏠 Destino: ${despacho.destino}${despacho.nota?'\n📝 '+despacho.nota:''}${S.obs?'\n─────────────────────\n_Obs.: '+S.obs+'_':''}\n─────────────────────\n_Registro de salida de stock_`;
+  const lineas=despacho.items.map(it=>`${EMOJIS[it.modelo]||'📦'} ${it.modelo}: *${it.cantidad.toLocaleString('es-CL')} und.*`).join('\n');
+  const msg=`*🚚 DESPACHO · ADOQUINES MODULARES*\n*${_tktId}*\n─────────────────────\n📅 ${fFmt}\n👷 Encargado: ${S.sup}\n─────────────────────\n${lineas}\n📦 Total: *${despacho.total.toLocaleString('es-CL')} unidades*\n🏠 Destino: ${despacho.destino}${despacho.pedidoId?'\n🧾 Pedido: '+despacho.pedidoId:''}${despacho.nota?'\n📝 '+despacho.nota:''}${S.obs?'\n─────────────────────\n_Obs.: '+S.obs+'_':''}\n─────────────────────\n_Registro de salida de stock_`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
 }
 function printDespTicket() { printHTML(document.getElementById('despTicketOut').outerHTML); }
+
+function onDespFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    despacho.foto = e.target.result;
+    const img = document.getElementById('despFotoPreview');
+    img.src = e.target.result;
+    img.style.display = 'block';
+    document.getElementById('despFotoRemove').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function removeDespFoto() {
+  despacho.foto = null;
+  const img = document.getElementById('despFotoPreview');
+  img.style.display = 'none'; img.src = '';
+  document.getElementById('despFotoRemove').style.display = 'none';
+  document.getElementById('despFotoInput').value = '';
+}
 
 // ══════════════════════════════════════════════════════
 // PASO 3: RESUMEN
@@ -1678,10 +1796,10 @@ async function guardarEnPlanilla() {
         fecha:fmtFecha(S.fecha),
         sup:S.sup,
         obs:S.obs,
-        modelo:despacho.modelo,
-        cantidad:despacho.cantidad,
+        items:despacho.items,
         destino:despacho.destino,
         nota:despacho.nota,
+        pedidoId:despacho.pedidoId||'',
       };
 
     } else {
@@ -1699,26 +1817,99 @@ async function guardarEnPlanilla() {
       payload = { tipo:'otros', tktId:_tktId, fecha:fmtFecha(S.fecha), sup:S.sup, obs:S.obs, bonos };
     }
 
-    const resp = await fetch(SHEETS_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    const data = await resp.json();
+    // Bloque 4: primero a la cola local, luego intentar sincronizar.
+    // Si no hay señal, el ticket queda guardado en el teléfono y se
+    // reenvía solo — el backend ignora reenvíos duplicados por tktId.
+    encolar(payload);
+    await procesarCola(true);
 
-    if (data.ok) {
+    if (!enCola(payload.tktId)) {
       showSaveStatus('ok', '✅ ¡Guardado correctamente en Google Sheets!');
       btn.textContent = '✅ Guardado en Planilla';
       btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
       btn.disabled = true;
     } else {
-      throw new Error(data.mensaje || 'Error desconocido');
+      showSaveStatus('warn', '📥 Sin señal — el ticket quedó guardado en este teléfono y se enviará automáticamente cuando vuelva la conexión. Puedes seguir trabajando.');
+      btn.textContent = '📥 Guardado local (pendiente de envío)';
+      btn.disabled = true;
     }
 
   } catch (err) {
-    showSaveStatus('warn', '❌ Error al guardar: ' + err.message + ' — verifica la URL del Apps Script.');
+    showSaveStatus('warn', '❌ Error al guardar: ' + err.message + ' — el ticket quedó en la cola local.');
     btn.disabled = false;
     btn.textContent = '📊 Reintentar';
   }
+}
+
+// ── PEDIDOS ABIERTOS EN DESPACHO (Bloque 5) ──
+async function cargarPedidosDespacho(){
+  const sel = document.getElementById('despPedido');
+  if (!sel) return;
+  try{
+    const res = await fetch(`${SHEETS_URL}?action=pedidos`);
+    const d = await res.json();
+    if (!d.ok) return;
+    const activos = (d.pedidos||[]).filter(p=>p.estado==='Abierto'||p.estado==='Parcial');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Sin pedido / venta directa —</option>';
+    activos.forEach(p=>{
+      const saldo = p.items.reduce((s,it)=>s+Math.max(0,it.cantidad-it.despachado),0);
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = `${p.id} · ${p.cliente} (faltan ${saldo.toLocaleString('es-CL')})`;
+      sel.appendChild(o);
+    });
+    if (prev && Array.from(sel.options).some(o=>o.value===prev)) sel.value = prev;
+  }catch(e){ /* sin conexión: se puede despachar sin pedido */ }
+}
+
+// ══════════════════════════════════════════════════════
+// COLA OFFLINE (Bloque 4)
+// ══════════════════════════════════════════════════════
+let _sincronizando = false;
+
+function getCola(){ try{ return JSON.parse(localStorage.getItem('fp_cola')||'[]'); }catch(e){ return []; } }
+function setCola(c){ try{ localStorage.setItem('fp_cola',JSON.stringify(c)); }catch(e){} actualizarColaBadge(); }
+function enCola(tktId){ return getCola().some(x=>x.payload && x.payload.tktId===tktId); }
+
+function encolar(payload){
+  const c = getCola();
+  c.push({ qid: Date.now()+'-'+Math.random().toString(36).slice(2,6), ts: Date.now(), intentos: 0, payload });
+  setCola(c);
+}
+
+async function procesarCola(silencioso){
+  const c = getCola();
+  if (!c.length || _sincronizando) return;
+  _sincronizando = true;
+  let enviados = 0;
+  for (const item of c) {
+    try {
+      const r = await fetch(SHEETS_URL, { method:'POST', body: JSON.stringify({ ...item.payload, token: APP_TOKEN }) });
+      const d = await r.json();
+      if (d.ok) {
+        setCola(getCola().filter(x=>x.qid!==item.qid));
+        enviados++;
+      } else {
+        // Rechazo del servidor (ej. token): conservar y anotar intento
+        const c2 = getCola(); const it = c2.find(x=>x.qid===item.qid);
+        if (it){ it.intentos=(it.intentos||0)+1; it.ultimoError=d.mensaje||'rechazado'; setCola(c2); }
+        break;
+      }
+    } catch(e) { break; } // sin conexión: parar y reintentar después
+  }
+  _sincronizando = false;
+  actualizarColaBadge();
+  if (enviados && !silencioso) toast(`✓ ${enviados} ticket${enviados!==1?'s':''} pendiente${enviados!==1?'s':''} sincronizado${enviados!==1?'s':''}`);
+}
+
+function actualizarColaBadge(){
+  const el = document.getElementById('colaBadge');
+  if (!el) return;
+  const n = getCola().length;
+  el.style.display = n ? 'inline-flex' : 'none';
+  el.textContent = '📥 ' + n;
+  el.title = n + ' ticket(s) pendiente(s) de envío — toca para reintentar';
 }
 
 function fmtFecha(iso) {
@@ -1741,18 +1932,19 @@ function showSaveStatus(type, msg) {
 
 function resetApp() {
   records=[]; otros=[]; appMode=''; selRol=''; fabTOn=false; selObTipo=''; selObImp=null; _tktId=''; _selKey='';
-  despacho={modelo:'Bloque',cantidad:0,destino:'',nota:''};
+  despacho={items:[],total:0,destino:'',nota:'',foto:null,pedidoId:''};
+  removeDespFoto();
   document.getElementById('savedList').innerHTML='';
   document.getElementById('otrosList').innerHTML='';
   document.getElementById('avDisp').textContent='0';
-  document.getElementById('inpFecha').value=new Date().toISOString().slice(0,10);
-  document.getElementById('obFecha').value=new Date().toISOString().slice(0,10);
+  document.getElementById('inpFecha').value=hoyLocal();
+  document.getElementById('obFecha').value=hoyLocal();
   document.getElementById('inpSup').value=''; document.getElementById('inpObs').value='';
   document.getElementById('otrosSupRow').style.display='none'; document.getElementById('supManualRow').style.display='none';
   document.getElementById('mc-prod').className='mode-card'; document.getElementById('mc-otros').className='mode-card'; document.getElementById('mc-desp').className='mode-card mc-pres-full'; document.getElementById('mc-pres').className='mode-card mc-pres-full';
   const despEl=document.getElementById('despTicketSection'); if(despEl) despEl.style.display='none';
-  ['despCant','despDestino','despNota'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  const dm=document.getElementById('despModelo'); if(dm) dm.value='Bloque';
+  ['despCantBloque','despCantMosaico','despCantHilera','despDestino','despNota'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const dp=document.getElementById('despPedido'); if(dp) dp.value='';
   document.getElementById('rwWorker').value=''; document.getElementById('rwCant').value=''; document.getElementById('rwModelo').value='Bloque';
   ['fab','trp','trp_a','pas'].forEach(r=>{document.getElementById('pill-'+r).className='rpill';});
   document.getElementById('fabtToggle').className='fabt-toggle'; document.getElementById('togFabT').checked=false;

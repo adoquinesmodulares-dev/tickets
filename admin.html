@@ -182,6 +182,9 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 </div>
 <div class="nav-bar">
   <a class="nav-pill active" href="#">📊 Dashboard</a>
+  <a class="nav-pill" href="./personas.html">👥 Personas</a>
+  <a class="nav-pill" href="./pedidos.html">🧾 Pedidos</a>
+  <a class="nav-pill" href="./rendiciones.html">💸 Rendiciones</a>
   <a class="nav-pill" href="./index.html">🎫 Tickets</a>
 </div>
 
@@ -302,6 +305,8 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
     <div class="empty"><div class="empty-icon">⏳</div><div style="font-size:13px">Cargando datos...</div></div>
   </div>
 
+  <!-- Vacaciones y gestión de personas → módulo propio: personas.html -->
+
 </div><!-- /mainDash -->
 
 <!-- ═══ PANEL: FABRICADOS ═══ -->
@@ -366,8 +371,31 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 
 <script>
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
+// Token compartido con el Apps Script — debe coincidir con APP_TOKEN en el backend
+const APP_TOKEN = 'fp-adoq-2026';
 
-const WORKERS = [
+// ─── PIN DE ACCESO ────────────────────────────────────────────────────
+// ⚠️ Cambia este PIN por uno propio antes de publicar
+const ADMIN_PIN = '2026';
+(function gatePin(){
+  if (sessionStorage.getItem('fp_admin_ok') === '1') return;
+  for (let i = 0; i < 3; i++) {
+    const p = prompt('🔒 Dashboard Adoquines Modulares\n\nIngresa el PIN de acceso:');
+    if (p === ADMIN_PIN) { sessionStorage.setItem('fp_admin_ok','1'); return; }
+    if (p === null) break; // canceló
+  }
+  document.documentElement.innerHTML = '<body style="background:#0d0e12;color:#a0a5c0;font-family:sans-serif;display:grid;place-items:center;height:100vh"><div style="text-align:center"><div style="font-size:40px">🔒</div><p>Acceso denegado</p></div></body>';
+  throw new Error('PIN incorrecto');
+})();
+
+// Mes actual en formato YYYY-MM usando hora local (evita bug UTC de fin de mes)
+function mesLocal(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+}
+
+// Respaldo offline — la nómina real llega desde Sheets (?action=config)
+let WORKERS = [
   { id:'yoel',       nom:'Yoel Yévenes'       },
   { id:'cristhian',  nom:'Cristhian González' },
   { id:'yerlinton',  nom:'Yerlinton Rivas'    },
@@ -379,6 +407,7 @@ const WORKERS = [
   { id:'benjamin',   nom:'Benjamín Catalán'   },
   { id:'mauricio_c', nom:'Mauricio Casas'     },
   { id:'cristobal',  nom:'Cristóbal Menares'  },
+  { id:'cristian_p', nom:'Cristián Pizarro'   },
 ];
 const ROL_LABEL = { fab:'Fabricante', trp:'Tromp. Maestro', trp_a:'Ay. Trompo', pas:'Inst. Pasto' };
 const ROL_BC    = { fab:'b-fab', trp:'b-trp', trp_a:'b-trp', pas:'b-pas' };
@@ -392,9 +421,54 @@ let ultimaProd     = {};
 let ultimasSalidas = {};
 let panelActual    = null;
 
+// ─── DATOS ADMIN COMPARTIDOS (Sheets, no localStorage) ────────────────
+// Cache en memoria; se carga desde Sheets al iniciar y se sincroniza en
+// cada cambio. Así el stock, avisos y excepciones son iguales en todos
+// los dispositivos. localStorage queda solo como respaldo offline.
+const ADMIN_CACHE = { avisos:[], ingresos:[], salidas:[], trompo_exc:{} };
+let adminDataListo = false;
+
+async function cargarAdminData(){
+  try{
+    const res = await fetch(`${SHEETS_URL}?action=admindata`);
+    const d = await res.json();
+    if(d && d.ok && d.data){
+      ADMIN_CACHE.avisos     = d.data.avisos     || [];
+      ADMIN_CACHE.ingresos   = d.data.ingresos   || [];
+      ADMIN_CACHE.salidas    = d.data.salidas    || [];
+      ADMIN_CACHE.trompo_exc = d.data.trompo_exc || {};
+      adminDataListo = true;
+      // Migración única: si Sheets está vacío pero hay datos locales antiguos, subirlos
+      if(!d.data.avisos && localStorage.getItem('fp_avisos'))   { try{ ADMIN_CACHE.avisos  = JSON.parse(localStorage.getItem('fp_avisos'));  pushAdminData('avisos');  }catch(e){} }
+      if(!d.data.salidas && localStorage.getItem('fp_salidas')) { try{ ADMIN_CACHE.salidas = JSON.parse(localStorage.getItem('fp_salidas')); pushAdminData('salidas'); }catch(e){} }
+      if(!d.data.ingresos && localStorage.getItem('fp_ingresos')){ try{ ADMIN_CACHE.ingresos = JSON.parse(localStorage.getItem('fp_ingresos')); pushAdminData('ingresos'); }catch(e){} }
+    } else { throw new Error('sin datos'); }
+  }catch(e){
+    // Respaldo offline: usar lo último guardado localmente
+    try{ ADMIN_CACHE.avisos     = JSON.parse(localStorage.getItem('fp_avisos')||'[]'); }catch(_){}
+    try{ ADMIN_CACHE.ingresos   = JSON.parse(localStorage.getItem('fp_ingresos')||'[]'); }catch(_){}
+    try{ ADMIN_CACHE.salidas    = JSON.parse(localStorage.getItem('fp_salidas')||'[]'); }catch(_){}
+    try{ ADMIN_CACHE.trompo_exc = JSON.parse(localStorage.getItem('fp_trompo_exc_all')||'{}'); }catch(_){}
+    showToast('⚠️ Sin conexión — mostrando datos locales');
+  }
+  renderAvisos(); renderAvisosResumen(); renderModelos();
+}
+
+function pushAdminData(clave){
+  // Respaldo local inmediato
+  const mapLS = { avisos:'fp_avisos', ingresos:'fp_ingresos', salidas:'fp_salidas', trompo_exc:'fp_trompo_exc_all' };
+  try{ localStorage.setItem(mapLS[clave], JSON.stringify(ADMIN_CACHE[clave])); }catch(e){}
+  // Sincronizar a Sheets
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({tipo:'admindata',clave,valor:ADMIN_CACHE[clave],token:APP_TOKEN})})
+    .then(r=>r.json())
+    .then(d=>{ if(!d.ok) showToast('⚠️ No se pudo sincronizar ('+(d.mensaje||'error')+')'); })
+    .catch(()=>showToast('⚠️ Cambio guardado localmente — se perderá si no hay conexión'));
+}
+
 // ─── AVISOS ──────────────────────────────────────────────────────────
-function getAvisos(){ try{ return JSON.parse(localStorage.getItem('fp_avisos')||'[]'); }catch(e){ return []; } }
-function saveAvisos(a){ localStorage.setItem('fp_avisos',JSON.stringify(a)); }
+function getAvisos(){ return ADMIN_CACHE.avisos; }
+function saveAvisos(a){ ADMIN_CACHE.avisos = a; pushAdminData('avisos'); }
 
 function toggleNotas(){
   const panel=document.getElementById('notasPanel');
@@ -451,7 +525,7 @@ async function cargarDatos(){
   btn.classList.add('loading');
   try {
     const dia = document.getElementById('inpFecha').value;
-    const mes = document.getElementById('inpMes').value || new Date().toISOString().slice(0,7);
+    const mes = document.getElementById('inpMes').value || mesLocal();
     const url = dia ? `${SHEETS_URL}?action=resumen&fecha=${dia}` : `${SHEETS_URL}?action=mes&mes=${mes}`;
     const res  = await fetch(url);
     const data = await res.json();
@@ -482,7 +556,7 @@ function renderResumen(data, esDia){
   const totalUnid = fabricantes.reduce((s,r)=>s+r.cant,0);
   const totalAV   = data.av_total||0;
   const totalBono = regs.reduce((s,r)=>s+(r.bonoProd||0)+(r.bonoT||0),0);
-  const mes = document.getElementById('inpMes').value || new Date().toISOString().slice(0,7);
+  const mes = document.getElementById('inpMes').value || mesLocal();
   const [y,m] = mes.split('-');
   const mesLabel = MESES_ES[parseInt(m,10)-1]+' '+y;
 
@@ -585,7 +659,7 @@ function calcTotalDespachos(){
 async function anularRow(tktId,nom){
   if(!confirm(`¿Anular el registro de ${nom}?\nQuedará marcado como ANULADO (no se elimina).`)) return;
   try {
-    const res=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({tipo:'anular',tktId,nom})});
+    const res=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({tipo:'anular',tktId,nom,token:APP_TOKEN})});
     const data=await res.json();
     if(data.ok){ showToast('✓ Registro de '+nom+' anulado'); cargarDatos(); }
     else showToast('Error: '+(data.mensaje||'No se pudo anular'));
@@ -597,7 +671,7 @@ function generarReporteWA(wid, nom){
   if(!ultimosDatos){ showToast('⏳ Primero actualiza los datos'); return; }
   const regs = (ultimosDatos.registros||[]).filter(r=>r.wid===wid);
   if(!regs.length){ showToast('Sin registros para este colaborador'); return; }
-  const mes = document.getElementById('inpMes').value||new Date().toISOString().slice(0,7);
+  const mes = document.getElementById('inpMes').value||mesLocal();
   const [y,m]=mes.split('-');
   const mesLabel=MESES_ES[parseInt(m,10)-1]+' '+y;
   const totalCant=regs.filter(r=>r.rol==='fab'||r.rol==='pas').reduce((s,r)=>s+r.cant,0);
@@ -621,10 +695,10 @@ function generarReporteWA(wid, nom){
 
 // ─── MODELOS STOCK ────────────────────────────────────────────────────
 const MODELOS_DEF=[{id:'bloque',nombre:'Bloque',emoji:'🧱'},{id:'mosaico',nombre:'Mosaico',emoji:'🔷'},{id:'hilera',nombre:'Hilera',emoji:'➖'}];
-function getSalidas(){ try{ return JSON.parse(localStorage.getItem('fp_salidas')||'[]'); }catch(e){ return []; } }
-function saveSalidas(a){ localStorage.setItem('fp_salidas',JSON.stringify(a)); }
-function getIngresos(){ try{ return JSON.parse(localStorage.getItem('fp_ingresos')||'[]'); }catch(e){ return []; } }
-function saveIngresos(a){ localStorage.setItem('fp_ingresos',JSON.stringify(a)); }
+function getSalidas(){ return ADMIN_CACHE.salidas; }
+function saveSalidas(a){ ADMIN_CACHE.salidas = a; pushAdminData('salidas'); }
+function getIngresos(){ return ADMIN_CACHE.ingresos; }
+function saveIngresos(a){ ADMIN_CACHE.ingresos = a; pushAdminData('ingresos'); }
 function getProdPorModelo(id){ return (ultimaProd[id]||0); }
 function getSalidasActual(id){ return (ultimasSalidas[id]||0)+getSalidas().filter(d=>d.modeloId===id).reduce((s,d)=>s+d.cantidad,0); }
 function getStockActual(id){ return getProdPorModelo(id)+getIngresos().filter(i=>i.modeloId===id).reduce((s,i)=>s+i.cantidad,0)-getSalidasActual(id); }
@@ -670,7 +744,7 @@ function abrirPanel(tipo){
   if(panel){ panel.classList.add('open'); }
   panelActual=tipo;
   window.scrollTo(0,0);
-  const mes=document.getElementById('inpMes').value||new Date().toISOString().slice(0,7);
+  const mes=document.getElementById('inpMes').value||mesLocal();
   const [y,m]=mes.split('-');
   const mesLabel=MESES_ES[parseInt(m,10)-1]+' '+y;
   if(tipo==='fabricados') renderPanelFabricados(mesLabel);
@@ -741,7 +815,7 @@ function anularDespachoLocal(id){
   saveSalidas(getSalidas().filter(d=>d.id!==id));
   showToast('✓ Movimiento anulado');
   renderModelos();
-  const mes=document.getElementById('inpMes').value||new Date().toISOString().slice(0,7);
+  const mes=document.getElementById('inpMes').value||mesLocal();
   const [y,m]=mes.split('-');
   renderPanelDespachos(MESES_ES[parseInt(m,10)-1]+' '+y);
 }
@@ -872,16 +946,19 @@ function renderCalendarioTrompo(dias,year,monthIdx,errorMsg){
 }
 
 function getExcepcionesTrompo(year,monthIdx){
-  try{ return JSON.parse(localStorage.getItem(`fp_trompo_exc_${year}_${monthIdx+1}`)||'[]'); }catch(e){ return []; }
+  return ADMIN_CACHE.trompo_exc[`${year}_${monthIdx+1}`] || [];
 }
-function saveExcepcionesTrompo(year,monthIdx,arr){ localStorage.setItem(`fp_trompo_exc_${year}_${monthIdx+1}`,JSON.stringify(arr)); }
+function saveExcepcionesTrompo(year,monthIdx,arr){
+  ADMIN_CACHE.trompo_exc[`${year}_${monthIdx+1}`] = arr;
+  pushAdminData('trompo_exc');
+}
 
 function agregarExcepcionTrompo(){
   const dia=prompt('¿Qué día del mes? (número)');
   if(!dia||isNaN(parseInt(dia,10))) return;
   const operador=prompt('¿Quién trabajó en el trompo ese día? (nombre)');
   if(!operador||!operador.trim()) return;
-  const mes=document.getElementById('inpMes').value||new Date().toISOString().slice(0,7);
+  const mes=document.getElementById('inpMes').value||mesLocal();
   const [y,m]=mes.split('-');
   const exc=getExcepcionesTrompo(parseInt(y,10),parseInt(m,10)-1);
   exc.push({dia:parseInt(dia,10),operador:operador.trim(),cargo:'Excepción'});
@@ -890,7 +967,13 @@ function agregarExcepcionTrompo(){
   showToast(`✓ Excepción agregada: día ${dia} · ${operador.trim()}`);
 }
 
+// ─── Vacaciones → movidas al módulo Personas (personas.html) ──────────
+
 // ─── UTILS ────────────────────────────────────────────────────────────
+function _slugNom(n){
+  return String(n||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
 
@@ -933,11 +1016,18 @@ function actualizarFecha(){
 
 // ─── INICIO ───────────────────────────────────────────────────────────
 function iniciar(){
-  document.getElementById('inpMes').value=new Date().toISOString().slice(0,7);
+  document.getElementById('inpMes').value=mesLocal();
   actualizarFecha();
   renderModelos();
   renderAvisos();
   renderAvisosResumen();
+  // Nómina real desde Sheets (Bloque 3) — respaldo local si no hay conexión
+  fetch(`${SHEETS_URL}?action=config`).then(r=>r.json()).then(d=>{
+    if(d.ok && Array.isArray(d.workers) && d.workers.length){
+      WORKERS = d.workers.map(w=>({ id:_slugNom(w.nom), nom:w.nom }));
+    }
+  }).catch(()=>{});
+  cargarAdminData();   // avisos, stock manual y excepciones desde Sheets
   cargarDatos();
   setInterval(cargarDatos,5*60*1000);
 }

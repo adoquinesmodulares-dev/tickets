@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Personas · Adoquines Modulares</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0e12;--ink2:#1c1e28;--ink3:#2a2d3e;--brd:#353849;--muted:#6b7090;
+  --fog:#a0a5c0;--paper:#f0f1f5;--amber:#f59e0b;--green:#22c55e;--red:#ef4444;
+  --blue:#60a5fa;--violet:#a78bfa;--teal:#2dd4bf;
+  --r:8px;--fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14px;min-height:100dvh}
+.topbar{background:var(--ink2);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;position:sticky;top:0;z-index:100}
+.top-date{font-family:var(--fm);font-size:13px;color:var(--amber);font-weight:500;text-align:right}
+.top-day{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:right}
+.nav-bar{display:flex;gap:8px;padding:10px 16px;background:var(--ink2);border-bottom:1px solid var(--brd);overflow-x:auto}
+.nav-pill{font-family:var(--fm);font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--brd);padding:5px 12px;border-radius:99px;white-space:nowrap}
+.nav-pill.active{color:var(--amber);border-color:var(--amber);background:rgba(245,158,11,.08)}
+.content{padding:16px;max-width:560px;margin:0 auto}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px}
+.sec-title{font-family:var(--fd);font-size:16px;font-weight:800}
+.sec-count{font-family:var(--fm);font-size:10px;color:var(--muted);border:1px solid var(--brd);padding:3px 9px;border-radius:99px}
+.empty{text-align:center;padding:20px;color:var(--muted);font-size:12px;font-family:var(--fm);background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r)}
+.card{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;margin-bottom:8px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.b-apr{color:var(--green)}.b-rech{color:var(--red)}
+.btn-ok{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:var(--green);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600}
+.btn-no{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer}
+.ibox{border-radius:var(--r);padding:10px 12px;margin:10px 0;font-size:12px;display:flex;gap:8px;line-height:1.5;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--blue)}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink3);border:1px solid var(--brd);border-radius:99px;padding:9px 18px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
+.kpi{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:10px;text-align:center}
+.kpi .v{font-family:var(--fd);font-size:20px;font-weight:800}
+.kpi .l{font-family:var(--fm);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <svg width="110" height="38" viewBox="0 0 110 38" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="38" rx="4" fill="#111"/>
+    <text x="7" y="17" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13" fill="#F5A623" letter-spacing="1">ADOQUINES</text>
+    <text x="7" y="31" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13" fill="#FFFFFF" letter-spacing="1">MODULARES</text>
+  </svg>
+  <div>
+    <div class="top-date" id="topDate">—</div>
+    <div class="top-day" id="topDay">—</div>
+  </div>
+</div>
+<div class="nav-bar">
+  <a class="nav-pill" href="./admin.html">📊 Dashboard</a>
+  <a class="nav-pill active" href="#">👥 Personas</a>
+  <a class="nav-pill" href="./pedidos.html">🧾 Pedidos</a>
+  <a class="nav-pill" href="./rendiciones.html">💸 Rendiciones</a>
+  <a class="nav-pill" href="./index.html">🎫 Tickets</a>
+</div>
+
+<div class="content">
+  <div class="kpis">
+    <div class="kpi"><div class="v" style="color:var(--teal)" id="kActivos">—</div><div class="l">Activos</div></div>
+    <div class="kpi"><div class="v" style="color:var(--amber)" id="kPend">—</div><div class="l">Vac. pendientes</div></div>
+    <div class="kpi"><div class="v" style="color:var(--green)" id="kAprob">—</div><div class="l">Vac. aprobadas</div></div>
+  </div>
+
+  <!-- VACACIONES -->
+  <div class="sec-head">
+    <div class="sec-title">🏖️ Solicitudes de vacaciones</div>
+    <span class="sec-count" id="countVac">—</span>
+  </div>
+  <div id="vacWrap"><div class="empty">Cargando solicitudes…</div></div>
+
+  <!-- NÓMINA -->
+  <div class="sec-head">
+    <div class="sec-title">👷 Nómina activa</div>
+    <span class="sec-count" id="countNom">—</span>
+  </div>
+  <div id="nomWrap"><div class="empty">Cargando nómina…</div></div>
+  <div class="ibox"><span>✏️</span><div>Altas, bajas, teléfonos, PIN y fechas de ingreso se editan en la hoja <strong>Personal</strong> de Google Sheets. Tarifas en la hoja <strong>Config</strong>.</div></div>
+
+  <div class="ibox" style="background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.2);color:var(--violet)"><span>🧩</span><div>Próximamente en este módulo: asistencia diaria, vencimiento de contratos y enlace al proceso de remuneración mensual.</div></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
+const APP_TOKEN  = 'fp-adoq-2026';
+
+// ─── PIN (mismo que el dashboard) ───
+const ADMIN_PIN = '2026';
+(function(){
+  if (sessionStorage.getItem('fp_admin_ok') === '1') return;
+  for (let i=0;i<3;i++){
+    const p = prompt('🔒 Módulo Personas\n\nIngresa el PIN de acceso:');
+    if (p === ADMIN_PIN){ sessionStorage.setItem('fp_admin_ok','1'); return; }
+    if (p === null) break;
+  }
+  document.documentElement.innerHTML='<body style="background:#0d0e12;color:#a0a5c0;font-family:sans-serif;display:grid;place-items:center;height:100vh"><div style="text-align:center"><div style="font-size:40px">🔒</div><p>Acceso denegado</p></div></body>';
+  throw new Error('PIN incorrecto');
+})();
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
+
+// ─── VACACIONES ───
+async function cargarVacaciones(){
+  const wrap=document.getElementById('vacWrap');
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=vacaciones`);
+    const d=await res.json();
+    if(!d.ok) throw new Error(d.mensaje||'error');
+    const sols=d.solicitudes||[];
+    const pend=sols.filter(s=>s.estado==='Pendiente');
+    const resueltas=sols.filter(s=>s.estado!=='Pendiente');
+    document.getElementById('countVac').textContent=pend.length?`${pend.length} pendiente${pend.length!==1?'s':''}`:'al día';
+    document.getElementById('kPend').textContent=pend.length;
+    document.getElementById('kAprob').textContent=resueltas.filter(s=>s.estado==='Aprobada').length;
+    let html='';
+    if(!pend.length){
+      html+='<div class="empty">✓ Sin solicitudes pendientes</div>';
+    } else {
+      html+=pend.map(s=>{
+        const idSafe=(s.id||'').replace(/'/g,"\\'");
+        const nomSafe=esc(s.nombre).replace(/'/g,"\\'");
+        const saldoTxt=(typeof s.saldo==='number')?` · saldo: <strong style="color:${s.dias>s.saldo?'var(--red)':'var(--teal)'}">${s.saldo} días</strong>`:'';
+        return `<div class="card" style="border-color:rgba(245,158,11,.35)">
+          <div class="row">
+            <div>
+              <div style="font-weight:600;font-size:14px">${esc(s.nombre)}</div>
+              <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-top:3px">${esc(s.desde)} → ${esc(s.hasta)} · <strong style="color:var(--amber)">${s.dias} día${s.dias!==1?'s':''} hábiles</strong>${saldoTxt}</div>
+              ${s.comentario?`<div style="font-size:11px;color:var(--fog);margin-top:4px">💬 ${esc(s.comentario)}</div>`:''}
+              <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:3px">Solicitado: ${esc(s.fechaSolicitud||'—')}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+              <button class="btn-ok" onclick="responderVac('${idSafe}','Aprobada','${nomSafe}')">✓ Aprobar</button>
+              <button class="btn-no" onclick="responderVac('${idSafe}','Rechazada','${nomSafe}')">✕ Rechazar</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    if(resueltas.length){
+      html+=`<div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin:10px 0 6px">Historial reciente</div>`;
+      html+=resueltas.slice(0,8).map(s=>`<div class="row" style="padding:7px 4px;border-bottom:1px solid rgba(53,56,73,.4);font-size:12px">
+        <div>${esc(s.nombre)} · <span style="color:var(--muted);font-family:var(--fm);font-size:11px">${esc(s.desde)} → ${esc(s.hasta)} (${s.dias}d)</span></div>
+        <span style="font-family:var(--fm);font-size:10px" class="${s.estado==='Aprobada'?'b-apr':'b-rech'}">${esc(s.estado)}</span>
+      </div>`).join('');
+    }
+    wrap.innerHTML=html;
+  }catch(e){
+    wrap.innerHTML='<div class="empty">⚠️ No se pudieron cargar las solicitudes<br><span style="font-size:10px">requiere backend v10 publicado</span></div>';
+  }
+}
+
+async function responderVac(id,estado,nombre){
+  if(!confirm(`¿${estado==='Aprobada'?'Aprobar':'Rechazar'} las vacaciones de ${nombre}?`)) return;
+  try{
+    const res=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({tipo:'vacacion_responder',id,estado,token:APP_TOKEN})});
+    const d=await res.json();
+    if(d.ok){ showToast(`✓ Solicitud ${estado.toLowerCase()}`); cargarVacaciones(); }
+    else showToast('Error: '+(d.mensaje||'no se pudo responder'));
+  }catch(e){ showToast('Error de conexión'); }
+}
+
+// ─── NÓMINA ───
+async function cargarNomina(){
+  const wrap=document.getElementById('nomWrap');
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=config`);
+    const d=await res.json();
+    if(!d.ok||!Array.isArray(d.workers)) throw new Error('sin datos');
+    document.getElementById('countNom').textContent=d.workers.length+' colaboradores';
+    document.getElementById('kActivos').textContent=d.workers.length;
+    wrap.innerHTML=d.workers.map(w=>{
+      const telOk=w.tel&&!/^569000000/.test(w.tel);
+      return `<div class="row" style="padding:8px 4px;border-bottom:1px solid rgba(53,56,73,.4);font-size:13px">
+        <div><div style="font-weight:600">${esc(w.nom)}</div><div style="font-size:10px;color:var(--muted);font-family:var(--fm)">${esc(w.cargo||'sin cargo asignado')}</div></div>
+        <div style="font-family:var(--fm);font-size:11px;color:${telOk?'var(--green)':'var(--red)'}">${telOk?'📱 '+esc(w.tel):'⚠ tel. pendiente'}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    wrap.innerHTML='<div class="empty">⚠️ Sin conexión con la nómina</div>';
+  }
+}
+
+// ─── INIT ───
+(function(){
+  const now=new Date();
+  const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const D=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  document.getElementById('topDate').textContent=`${now.getDate()} ${M[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('topDay').textContent=D[now.getDay()];
+  cargarVacaciones(); cargarNomina();
+  setInterval(cargarVacaciones,5*60*1000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Rendiciones · Adoquines Modulares</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0e12;--ink2:#1c1e28;--ink3:#2a2d3e;--brd:#353849;--muted:#6b7090;
+  --fog:#a0a5c0;--paper:#f0f1f5;--amber:#f59e0b;--amber2:#d97706;--green:#22c55e;
+  --red:#ef4444;--blue:#60a5fa;--teal:#2dd4bf;
+  --r:8px;--fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14px;min-height:100dvh}
+.topbar{background:var(--ink2);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;position:sticky;top:0;z-index:100}
+.top-date{font-family:var(--fm);font-size:13px;color:var(--amber);font-weight:500;text-align:right}
+.top-day{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:right}
+.nav-bar{display:flex;gap:8px;padding:10px 16px;background:var(--ink2);border-bottom:1px solid var(--brd);overflow-x:auto}
+.nav-pill{font-family:var(--fm);font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--brd);padding:5px 12px;border-radius:99px;white-space:nowrap}
+.nav-pill.active{color:var(--amber);border-color:var(--amber);background:rgba(245,158,11,.08)}
+.content{padding:16px;max-width:560px;margin:0 auto}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px}
+.sec-title{font-family:var(--fd);font-size:16px;font-weight:800}
+.sec-count{font-family:var(--fm);font-size:10px;color:var(--muted);border:1px solid var(--brd);padding:3px 9px;border-radius:99px}
+.panel{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.ph{padding:10px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.02)}
+.ph-t{font-family:var(--fm);font-size:10px;font-weight:500;color:var(--fog);text-transform:uppercase;letter-spacing:1px}
+.pb{padding:16px}
+label{display:block;font-family:var(--fm);font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+input,select,textarea{width:100%;background:var(--ink3);border:1.5px solid var(--brd);border-radius:var(--r);color:var(--paper);font-family:var(--fb);font-size:15px;padding:10px 12px;outline:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--amber)}
+input[type="date"]{color-scheme:dark}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7090' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+select option{background:#1c1e28}
+.frow{margin-bottom:14px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.btn{width:100%;background:linear-gradient(135deg,var(--amber),var(--amber2));border:none;border-radius:var(--r);color:#000;font-family:var(--fb);font-size:14px;font-weight:700;padding:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5}
+.card{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+.badge{display:inline-block;font-family:var(--fm);font-size:9px;font-weight:500;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px}
+.b-pend{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.b-apr{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.b-rech{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.mini-btn{background:transparent;border:1px solid var(--brd);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:var(--fm)}
+.empty{text-align:center;padding:20px;color:var(--muted);font-size:12px;font-family:var(--fm);background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r)}
+.file-lbl{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--ink3);border:1.5px dashed var(--brd);border-radius:var(--r);cursor:pointer;color:var(--fog);font-size:13px}
+.file-lbl:active{border-color:var(--amber);color:var(--amber)}
+.kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
+.kpi{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:10px;text-align:center}
+.kpi .v{font-family:var(--fd);font-size:18px;font-weight:800}
+.kpi .l{font-family:var(--fm);font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink3);border:1px solid var(--brd);border-radius:99px;padding:9px 18px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <svg width="110" height="38" viewBox="0 0 110 38" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="38" rx="4" fill="#111"/>
+    <text x="7" y="17" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13" fill="#F5A623" letter-spacing="1">ADOQUINES</text>
+    <text x="7" y="31" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13" fill="#FFFFFF" letter-spacing="1">MODULARES</text>
+  </svg>
+  <div>
+    <div class="top-date" id="topDate">—</div>
+    <div class="top-day" id="topDay">—</div>
+  </div>
+</div>
+<div class="nav-bar">
+  <a class="nav-pill" href="./admin.html">📊 Dashboard</a>
+  <a class="nav-pill" href="./personas.html">👥 Personas</a>
+  <a class="nav-pill" href="./pedidos.html">🧾 Pedidos</a>
+  <a class="nav-pill active" href="#">💸 Rendiciones</a>
+  <a class="nav-pill" href="./index.html">🎫 Tickets</a>
+</div>
+
+<div class="content">
+  <div class="kpis">
+    <div class="kpi"><div class="v" style="color:var(--amber)" id="kPend">—</div><div class="l">Pendientes</div></div>
+    <div class="kpi"><div class="v" style="color:var(--green)" id="kAprMes">—</div><div class="l">Aprobado mes</div></div>
+    <div class="kpi"><div class="v" style="color:var(--fog)" id="kTotal">—</div><div class="l">Registros</div></div>
+  </div>
+
+  <!-- NUEVA RENDICIÓN -->
+  <div class="panel" style="margin-top:14px">
+    <div class="ph"><span>💸</span><span class="ph-t">Nueva rendición</span></div>
+    <div class="pb">
+      <div class="fg2">
+        <div>
+          <label>¿Quién rinde? *</label>
+          <select id="rRinde"><option value="">— Seleccionar —</option></select>
+        </div>
+        <div>
+          <label>Fecha del gasto *</label>
+          <input type="date" id="rFecha">
+        </div>
+      </div>
+      <div class="fg2">
+        <div>
+          <label>Categoría *</label>
+          <select id="rCat">
+            <option value="">— Seleccionar —</option>
+            <option>Materiales</option>
+            <option>Combustible</option>
+            <option>Peajes / Estacionamiento</option>
+            <option>Alimentación</option>
+            <option>Herramientas</option>
+            <option>Fletes</option>
+            <option>Otros</option>
+          </select>
+        </div>
+        <div>
+          <label>Monto ($) *</label>
+          <input type="number" id="rMonto" min="0" inputmode="numeric" placeholder="ej: 24990">
+        </div>
+      </div>
+      <div class="frow"><label>Nota / proveedor (opcional)</label><input type="text" id="rNota" placeholder="Ej: Sodimac — cemento obra Pudahuel"></div>
+      <div class="frow">
+        <label>Comprobante (foto o PDF) *</label>
+        <label class="file-lbl" for="rArchivo"><span>📎</span> <span id="rArchivoLbl">Adjuntar boleta o factura</span></label>
+        <input type="file" id="rArchivo" accept="image/*,application/pdf" style="display:none" onchange="onArchivo(this)">
+      </div>
+      <button class="btn" id="btnEnviar" onclick="enviarRendicion()">📨 Enviar Rendición</button>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="sec-head">
+    <div class="sec-title">📋 Rendiciones</div>
+    <span class="sec-count" id="countR">—</span>
+  </div>
+  <div id="rWrap"><div class="empty">Cargando…</div></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
+const APP_TOKEN  = 'fp-adoq-2026';
+const MAX_MB = 8;
+
+// ─── PIN (mismo que dashboard) ───
+const ADMIN_PIN = '2026';
+(function(){
+  if (sessionStorage.getItem('fp_admin_ok') === '1') return;
+  for (let i=0;i<3;i++){
+    const p = prompt('🔒 Módulo Rendiciones\n\nIngresa el PIN de acceso:');
+    if (p === ADMIN_PIN){ sessionStorage.setItem('fp_admin_ok','1'); return; }
+    if (p === null) break;
+  }
+  document.documentElement.innerHTML='<body style="background:#0d0e12;color:#a0a5c0;font-family:sans-serif;display:grid;place-items:center;height:100vh"><div style="text-align:center"><div style="font-size:40px">🔒</div><p>Acceso denegado</p></div></body>';
+  throw new Error('PIN incorrecto');
+})();
+
+let _archivo = null; // {nombre, mime, base64}
+
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showToast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
+function hoyLocal(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmt$(n){ return '$'+(n||0).toLocaleString('es-CL'); }
+
+function onArchivo(inp){
+  const f = inp.files && inp.files[0];
+  if (!f){ _archivo=null; document.getElementById('rArchivoLbl').textContent='Adjuntar boleta o factura'; return; }
+  if (f.size > MAX_MB*1024*1024){ showToast('Archivo muy grande (máx '+MAX_MB+' MB)'); inp.value=''; return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    _archivo = { nombre:f.name, mime:f.type||'application/octet-stream', base64:String(rd.result).split(',')[1] };
+    document.getElementById('rArchivoLbl').textContent = '✓ ' + f.name;
+  };
+  rd.readAsDataURL(f);
+}
+
+async function enviarRendicion(){
+  const rinde=document.getElementById('rRinde').value;
+  const monto=parseInt(document.getElementById('rMonto').value)||0;
+  const cat=document.getElementById('rCat').value;
+  const fecha=document.getElementById('rFecha').value;
+  if(!rinde){ showToast('Selecciona quién rinde'); return; }
+  if(!fecha){ showToast('Selecciona la fecha del gasto'); return; }
+  if(!cat){ showToast('Selecciona la categoría'); return; }
+  if(monto<=0){ showToast('Ingresa el monto'); return; }
+  if(!_archivo){ showToast('Adjunta el comprobante (foto o PDF)'); return; }
+  const btn=document.getElementById('btnEnviar');
+  btn.disabled=true; btn.textContent='⏳ Subiendo comprobante…';
+  try{
+    const res=await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({
+      tipo:'rendicion', token:APP_TOKEN, rinde, fechaGasto:fecha, categoria:cat, monto,
+      nota:document.getElementById('rNota').value.trim(), archivo:_archivo,
+    })});
+    const d=await res.json();
+    if(d.ok){
+      showToast('✓ Rendición '+d.id+' enviada'+(d.archivo?' con comprobante':''));
+      ['rMonto','rNota'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('rArchivo').value=''; _archivo=null;
+      document.getElementById('rArchivoLbl').textContent='Adjuntar boleta o factura';
+      cargarRendiciones();
+    } else showToast('Error: '+(d.mensaje||'no se pudo enviar'));
+  }catch(e){ showToast('Sin conexión o archivo muy pesado — intenta de nuevo'); }
+  btn.disabled=false; btn.textContent='📨 Enviar Rendición';
+}
+
+async function cargarRendiciones(){
+  const wrap=document.getElementById('rWrap');
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=rendiciones`);
+    const d=await res.json();
+    if(!d.ok) throw new Error(d.mensaje||'error');
+    const rs=d.rendiciones||[];
+    const pend=rs.filter(r=>r.estado==='Pendiente');
+    const mesActual=hoyLocal().slice(0,7);
+    const aprMes=rs.filter(r=>{
+      if(r.estado!=='Aprobada'||!r.fechaGasto) return false;
+      const p=r.fechaGasto.split(/[\/\-]/);
+      const m=p.length===3?(p[0].length===4?p[0]+'-'+p[1]:p[2]+'-'+p[1].padStart(2,'0')):'';
+      return m===mesActual;
+    }).reduce((s,r)=>s+r.monto,0);
+    document.getElementById('kPend').textContent=pend.length;
+    document.getElementById('kAprMes').textContent=fmt$(aprMes);
+    document.getElementById('kTotal').textContent=rs.length;
+    document.getElementById('countR').textContent=pend.length?`${pend.length} pendiente${pend.length!==1?'s':''}`:'al día';
+    if(!rs.length){ wrap.innerHTML='<div class="empty">Sin rendiciones aún</div>'; return; }
+    const B={Pendiente:'b-pend',Aprobada:'b-apr',Rechazada:'b-rech'};
+    wrap.innerHTML=rs.slice(0,30).map(r=>{
+      const idSafe=r.id.replace(/'/g,"\\'");
+      const archivoOk=r.archivo&&r.archivo.indexOf('http')===0;
+      const acciones=r.estado==='Pendiente'
+        ? `<div style="display:flex;gap:6px;margin-top:8px">
+            <button class="mini-btn" style="color:var(--green);border-color:rgba(34,197,94,.4)" onclick="responder('${idSafe}','Aprobada')">✓ Aprobar</button>
+            <button class="mini-btn" style="color:var(--red);border-color:rgba(239,68,68,.3)" onclick="responder('${idSafe}','Rechazada')">✕ Rechazar</button>
+          </div>`:'';
+      return `<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:600;font-size:14px">${esc(r.rinde)} · <span style="color:var(--amber)">${fmt$(r.monto)}</span></div>
+            <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:2px">${esc(r.categoria)} · gasto: ${esc(r.fechaGasto||'—')} · ${esc(r.id)}</div>
+            ${r.nota?`<div style="font-size:11px;color:var(--fog);margin-top:3px">💬 ${esc(r.nota)}</div>`:''}
+            ${archivoOk?`<a href="${esc(r.archivo)}" target="_blank" style="font-size:11px;color:var(--blue);font-family:var(--fm)">📎 Ver comprobante</a>`:'<span style="font-size:10px;color:var(--red);font-family:var(--fm)">⚠ sin comprobante</span>'}
+          </div>
+          <span class="badge ${B[r.estado]||'b-pend'}">${esc(r.estado)}</span>
+        </div>
+        ${acciones}
+      </div>`;
+    }).join('');
+  }catch(e){
+    wrap.innerHTML='<div class="empty">⚠️ No se pudieron cargar las rendiciones<br><span style="font-size:10px">requiere backend v10 publicado</span></div>';
+  }
+}
+
+async function responder(id,estado){
+  if(!confirm(`¿${estado==='Aprobada'?'Aprobar':'Rechazar'} la rendición ${id}?`)) return;
+  try{
+    const res=await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({tipo:'rendicion_responder',id,estado,token:APP_TOKEN})});
+    const d=await res.json();
+    if(d.ok){ showToast('✓ Rendición '+estado.toLowerCase()); cargarRendiciones(); }
+    else showToast('Error: '+(d.mensaje||'no se pudo responder'));
+  }catch(e){ showToast('Error de conexión'); }
+}
+
+// ─── INIT ───
+(function(){
+  const now=new Date();
+  const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const D=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  document.getElementById('topDate').textContent=`${now.getDate()} ${M[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('topDay').textContent=D[now.getDay()];
+  document.getElementById('rFecha').value=hoyLocal();
+  // Nómina desde Sheets para el selector "quién rinde" (+ opción socios/admin)
+  const sel=document.getElementById('rRinde');
+  ['Ignacio (Admin)'].forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+  fetch(`${SHEETS_URL}?action=config`).then(r=>r.json()).then(d=>{
+    if(d.ok&&Array.isArray(d.workers)) d.workers.forEach(w=>{
+      const o=document.createElement('option'); o.value=w.nom; o.textContent=w.nom; sel.appendChild(o);
+    });
+  }).catch(()=>{});
+  cargarRendiciones();
+  setInterval(cargarRendiciones,5*60*1000);
+})();
+</script>
+</body>
+</html>

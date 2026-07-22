@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mi Portal · Adoquines Modulares</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0e12;--ink2:#1c1e28;--ink3:#2a2d3e;--brd:#353849;--muted:#6b7090;
+  --fog:#a0a5c0;--paper:#f0f1f5;--amber:#f59e0b;--amber2:#d97706;--green:#22c55e;
+  --red:#ef4444;--blue:#60a5fa;--violet:#a78bfa;--teal:#2dd4bf;
+  --r:8px;--fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14px;min-height:100dvh;overscroll-behavior:none}
+.topbar{background:var(--ink2);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;position:sticky;top:0;z-index:100}
+.top-date{font-family:var(--fm);font-size:13px;color:var(--amber);font-weight:500;text-align:right}
+.top-day{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:right}
+.wrap{padding:16px 16px 90px;max-width:560px;margin:0 auto}
+.sh h2{font-family:var(--fd);font-size:24px;font-weight:800;letter-spacing:-.5px}
+.sh p{font-size:12px;color:var(--muted);margin-top:4px;font-family:var(--fm)}
+.panel{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);margin:14px 0;overflow:hidden}
+.ph{padding:10px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.02)}
+.ph-t{font-family:var(--fm);font-size:10px;font-weight:500;color:var(--fog);text-transform:uppercase;letter-spacing:1px}
+.pb{padding:16px}
+label{display:block;font-family:var(--fm);font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+input,select,textarea{width:100%;background:var(--ink3);border:1.5px solid var(--brd);border-radius:var(--r);color:var(--paper);font-family:var(--fb);font-size:15px;padding:10px 12px;outline:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--amber)}
+input[type="date"]{color-scheme:dark}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7090' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+select option{background:#1c1e28}
+.frow{margin-bottom:14px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.btn{width:100%;background:linear-gradient(135deg,var(--amber),var(--amber2));border:none;border-radius:var(--r);color:#000;font-family:var(--fb);font-size:14px;font-weight:700;padding:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.3px}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5}
+.btn-out{background:transparent;border:1.5px solid var(--brd);color:var(--fog)}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.kcard{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:14px}
+.kcard.full{grid-column:1/-1}
+.klbl{font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.kval{font-family:var(--fd);font-size:26px;font-weight:800;margin-top:4px}
+.ksub{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:3px}
+.amber{color:var(--amber)}.green{color:var(--green)}.blue{color:var(--blue)}.teal{color:var(--teal)}.violet{color:var(--violet)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(53,56,73,.5);font-size:13px}
+.row:last-child{border-bottom:none}
+.row .sub{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:2px}
+.row .n{font-family:var(--fm);font-weight:600}
+.badge{display:inline-block;font-family:var(--fm);font-size:9px;font-weight:500;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px}
+.b-pend{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+.b-apr{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.b-rech{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.ibox{border-radius:var(--r);padding:10px 12px;margin:12px 0;font-size:12px;display:flex;gap:8px;line-height:1.5}
+.ibox.blue{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--blue)}
+.ibox.warn{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);color:var(--amber)}
+.ibox.ok{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--green)}
+.aviso{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(53,56,73,.5);font-size:13px;line-height:1.5}
+.aviso:last-child{border-bottom:none}
+.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--ink2);border-top:1px solid var(--brd);display:flex;z-index:100}
+.tab{flex:1;padding:10px 0 max(10px,env(safe-area-inset-bottom));text-align:center;cursor:pointer;color:var(--muted);font-size:10px;font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px}
+.tab .ti{font-size:20px;display:block;margin-bottom:2px}
+.tab.act{color:var(--amber)}
+.view{display:none}.view.act{display:block}
+.empty{text-align:center;padding:24px;color:var(--muted);font-size:12px;font-family:var(--fm)}
+.skel{color:var(--muted)}
+#toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--ink3);border:1px solid var(--brd);border-radius:99px;padding:9px 18px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.saldo-big{font-family:var(--fd);font-size:44px;font-weight:800;color:var(--teal);line-height:1}
+.logout{font-size:11px;font-family:var(--fm);color:var(--muted);border:1px solid var(--brd);padding:4px 9px;border-radius:5px;background:none;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <svg width="110" height="38" viewBox="0 0 110 38" xmlns="http://www.w3.org/2000/svg">
+    <rect width="110" height="38" rx="4" fill="#111"/>
+    <text x="7" y="17" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13" fill="#F5A623" letter-spacing="1">ADOQUINES</text>
+    <text x="7" y="31" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13" fill="#FFFFFF" letter-spacing="1">MODULARES</text>
+  </svg>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="logout" id="btnSalir" style="display:none" onclick="salir()">Salir</button>
+    <div>
+      <div class="top-date" id="topDate">—</div>
+      <div class="top-day" id="topDay">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ LOGIN ══════ -->
+<div class="wrap" id="vLogin">
+  <div class="sh"><h2>👷 Mi Portal</h2><p>Consulta tu producción, asistencia y vacaciones</p></div>
+  <div class="panel"><div class="ph"><span>🔑</span><span class="ph-t">Ingreso</span></div>
+    <div class="pb">
+      <div class="frow">
+        <label>¿Quién eres?</label>
+        <select id="selNombre"><option value="">— Seleccionar —</option></select>
+      </div>
+      <div class="frow">
+        <label>Tu PIN (4 dígitos)</label>
+        <input type="password" id="inpPin" inputmode="numeric" maxlength="4" placeholder="••••">
+      </div>
+      <button class="btn" id="btnEntrar" onclick="entrar()">Entrar →</button>
+      <div class="ibox blue" style="margin-bottom:0"><span>ℹ</span><div>Si no tienes PIN o no funciona, pídeselo al encargado.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div class="wrap" id="vApp" style="display:none">
+  <div class="sh"><h2 id="hNombre">—</h2><p id="hMes">—</p></div>
+
+  <!-- VISTA RESUMEN -->
+  <div class="view act" id="view-resumen">
+    <div class="kgrid">
+      <div class="kcard"><div class="klbl">Hoy · Unidades</div><div class="kval blue" id="kHoyU">—</div><div class="ksub" id="kHoySub">—</div></div>
+      <div class="kcard"><div class="klbl">Hoy · Bono est.</div><div class="kval green" id="kHoyB">—</div><div class="ksub">estimado del día</div></div>
+      <div class="kcard"><div class="klbl">Mes · Unidades</div><div class="kval amber" id="kMesU">—</div><div class="ksub" id="kMesDias">—</div></div>
+      <div class="kcard"><div class="klbl">Mes · Bono est.</div><div class="kval green" id="kMesB">—</div><div class="ksub">acumulado estimado</div></div>
+    </div>
+    <div class="ibox warn"><span>⚠️</span><div>Los bonos son <strong>estimados</strong> según los tickets registrados. El monto final se confirma en tu liquidación mensual.</div></div>
+    <div class="panel"><div class="ph"><span>📅</span><span class="ph-t">Mi asistencia del mes</span></div>
+      <div class="pb" id="asisList"><div class="empty">Cargando…</div></div>
+    </div>
+    <div class="panel"><div class="ph"><span>🧱</span><span class="ph-t">Mis registros del mes</span></div>
+      <div class="pb" id="prodList"><div class="empty">Cargando…</div></div>
+    </div>
+  </div>
+
+  <!-- VISTA VACACIONES -->
+  <div class="view" id="view-vacas">
+    <div class="kcard full" style="text-align:center;padding:20px;margin-bottom:12px">
+      <div class="klbl">Días de vacaciones disponibles</div>
+      <div class="saldo-big" id="kSaldo">—</div>
+      <div class="ksub" id="kSaldoSub">días hábiles (lunes a viernes)</div>
+    </div>
+    <div class="panel"><div class="ph"><span>🏖️</span><span class="ph-t">Solicitar vacaciones</span></div>
+      <div class="pb">
+        <div class="fg2">
+          <div><label>Desde</label><input type="date" id="vacDesde" onchange="calcVacDias()"></div>
+          <div><label>Hasta</label><input type="date" id="vacHasta" onchange="calcVacDias()"></div>
+        </div>
+        <div class="ibox blue" id="vacCalc" style="margin-top:0"><span>📐</span><div>Selecciona las fechas — los días hábiles se calculan solos.</div></div>
+        <div class="frow"><label>Comentario (opcional)</label><textarea id="vacObs" rows="2" placeholder="Ej: viaje familiar…"></textarea></div>
+        <button class="btn" id="btnVac" onclick="solicitarVac()">📨 Enviar Solicitud</button>
+      </div>
+    </div>
+    <div class="panel"><div class="ph"><span>📋</span><span class="ph-t">Mis solicitudes</span></div>
+      <div class="pb" id="vacList"><div class="empty">Sin solicitudes aún</div></div>
+    </div>
+  </div>
+
+  <!-- VISTA AVISOS -->
+  <div class="view" id="view-avisos">
+    <div class="panel"><div class="ph"><span>📢</span><span class="ph-t">Avisos del equipo</span></div>
+      <div class="pb" id="avisosList"><div class="empty">Sin avisos</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="tabs" style="display:none">
+  <div class="tab act" id="tab-resumen" onclick="verTab('resumen')"><span class="ti">📊</span>Resumen</div>
+  <div class="tab" id="tab-vacas" onclick="verTab('vacas')"><span class="ti">🏖️</span>Vacaciones</div>
+  <div class="tab" id="tab-avisos" onclick="verTab('avisos')"><span class="ti">📢</span>Avisos</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
+const APP_TOKEN  = 'fp-adoq-2026';
+
+// Respaldo offline — la nómina real llega desde Sheets (?action=config)
+let NOMBRES = [
+  'Yoel Yévenes','Cristhian González','Yerlinton Rivas','Jonathan Cifuentes',
+  'Yonis Mosquera','José Verdejo','Brayan Contreras','Mauricio Villa',
+  'Benjamín Catalán','Mauricio Casas','Cristián Pizarro',
+];
+
+let SES = null;   // { nombre, pin, data }
+
+function hoyLocal(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function mesLocal(){ return hoyLocal().slice(0,7); }
+function fmt$(n){ return '$'+(n||0).toLocaleString('es-CL'); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── INIT ──
+(function(){
+  const now=new Date();
+  const M=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const D=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  document.getElementById('topDate').textContent=`${now.getDate()} ${M[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('topDay').textContent=D[now.getDay()];
+  const sel=document.getElementById('selNombre');
+  NOMBRES.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+  // Nómina real desde Sheets (Bloque 3)
+  fetch(`${SHEETS_URL}?action=config`).then(r=>r.json()).then(d=>{
+    if(d.ok&&Array.isArray(d.workers)&&d.workers.length){
+      NOMBRES=d.workers.map(w=>w.nom);
+      const prev=sel.value;
+      sel.innerHTML='<option value="">— Seleccionar —</option>';
+      NOMBRES.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+      if(prev&&NOMBRES.indexOf(prev)>=0) sel.value=prev;
+    }
+  }).catch(()=>{});
+  // Sesión recordada en el dispositivo
+  try{
+    const s=JSON.parse(localStorage.getItem('fp_portal_ses')||'null');
+    if(s&&s.nombre&&s.pin){ document.getElementById('selNombre').value=s.nombre; document.getElementById('inpPin').value=s.pin; entrar(true); }
+  }catch(e){}
+})();
+
+// ── LOGIN ──
+async function entrar(auto){
+  const nombre=document.getElementById('selNombre').value;
+  const pin=document.getElementById('inpPin').value.trim();
+  if(!nombre){ if(!auto) toast('Selecciona tu nombre'); return; }
+  if(!/^\d{4}$/.test(pin)){ if(!auto) toast('El PIN son 4 dígitos'); return; }
+  const btn=document.getElementById('btnEntrar');
+  btn.disabled=true; btn.textContent='⏳ Verificando…';
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=portal&nombre=${encodeURIComponent(nombre)}&pin=${pin}&mes=${mesLocal()}`);
+    const d=await res.json();
+    if(!d.ok){ toast(d.mensaje||'PIN incorrecto'); btn.disabled=false; btn.textContent='Entrar →'; if(auto) localStorage.removeItem('fp_portal_ses'); return; }
+    SES={nombre,pin,data:d};
+    localStorage.setItem('fp_portal_ses',JSON.stringify({nombre,pin}));
+    render();
+  }catch(e){
+    toast('Sin conexión — intenta de nuevo');
+    btn.disabled=false; btn.textContent='Entrar →';
+  }
+}
+
+function salir(){
+  localStorage.removeItem('fp_portal_ses'); SES=null;
+  document.getElementById('vApp').style.display='none';
+  document.getElementById('tabs').style.display='none';
+  document.getElementById('btnSalir').style.display='none';
+  document.getElementById('vLogin').style.display='block';
+  const btn=document.getElementById('btnEntrar'); btn.disabled=false; btn.textContent='Entrar →';
+  document.getElementById('inpPin').value='';
+}
+
+// ── RENDER ──
+function render(){
+  const d=SES.data;
+  document.getElementById('vLogin').style.display='none';
+  document.getElementById('vApp').style.display='block';
+  document.getElementById('tabs').style.display='flex';
+  document.getElementById('btnSalir').style.display='inline-block';
+  document.getElementById('hNombre').textContent='👷 '+SES.nombre.split(' ')[0];
+  const [y,m]=mesLocal().split('-');
+  const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  document.getElementById('hMes').textContent=MESES[parseInt(m,10)-1]+' '+y;
+
+  // KPIs
+  const hoy=d.prod?.hoy||{unidades:0,bono:0,registros:[]};
+  const mesP=d.prod?.mes||{unidades:0,bono:0,dias:0,registros:[]};
+  document.getElementById('kHoyU').textContent=(hoy.unidades||0).toLocaleString('es-CL');
+  document.getElementById('kHoySub').textContent=hoy.registros?.length?hoy.registros.map(r=>r.modelo).filter(x=>x&&x!=='—').join(' · ')||'registrado':'sin registro aún';
+  document.getElementById('kHoyB').textContent=fmt$(hoy.bono);
+  document.getElementById('kMesU').textContent=(mesP.unidades||0).toLocaleString('es-CL');
+  document.getElementById('kMesDias').textContent=(mesP.dias||0)+' día'+(mesP.dias!==1?'s':'')+' registrados';
+  document.getElementById('kMesB').textContent=fmt$(mesP.bono);
+
+  // Asistencia: fechas únicas con registro
+  const fechas=mesP.fechas||[];
+  document.getElementById('asisList').innerHTML=fechas.length
+    ? `<div class="ibox ok" style="margin-top:0"><span>✓</span><div><strong>${fechas.length} día${fechas.length!==1?'s':''}</strong> con registro este mes</div></div>`
+      + fechas.map(f=>`<div class="row"><div>${esc(f)}</div><div class="n green">✓</div></div>`).join('')
+    : '<div class="empty">Sin días registrados este mes</div>';
+
+  // Registros producción
+  document.getElementById('prodList').innerHTML=(mesP.registros||[]).length
+    ? mesP.registros.map(r=>`<div class="row"><div><div>${esc(r.fecha)} · ${esc(r.funcion||'')}</div><div class="sub">${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</div></div><div class="n green">${fmt$(r.bono)}</div></div>`).join('')
+    : '<div class="empty">Sin registros este mes</div>';
+
+  // Vacaciones
+  const v=d.vacaciones||{};
+  document.getElementById('kSaldo').textContent=(v.saldo??'—');
+  document.getElementById('kSaldoSub').textContent=v.ingreso?`días hábiles · en la empresa desde ${v.ingreso}`:'días hábiles (lunes a viernes)';
+  renderVacList(v.solicitudes||[]);
+
+  // Avisos
+  const avs=d.avisos||[];
+  const ICON={info:'ℹ️',urgente:'🚨',logro:'🏆',recuerda:'📌'};
+  document.getElementById('avisosList').innerHTML=avs.length
+    ? avs.map(a=>`<div class="aviso"><div>${ICON[a.tipo]||'📌'}</div><div>${esc(a.txt)}</div></div>`).join('')
+    : '<div class="empty">Sin avisos por ahora</div>';
+}
+
+function renderVacList(sols){
+  const B={Pendiente:'b-pend',Aprobada:'b-apr',Rechazada:'b-rech'};
+  document.getElementById('vacList').innerHTML=sols.length
+    ? sols.map(s=>`<div class="row"><div><div>${esc(s.desde)} → ${esc(s.hasta)}</div><div class="sub">${s.dias} día${s.dias!==1?'s':''} hábiles${s.comentario?' · '+esc(s.comentario):''}</div></div><span class="badge ${B[s.estado]||'b-pend'}">${esc(s.estado)}</span></div>`).join('')
+    : '<div class="empty">Sin solicitudes aún</div>';
+}
+
+// ── TABS ──
+function verTab(t){
+  ['resumen','vacas','avisos'].forEach(x=>{
+    document.getElementById('view-'+x).className='view'+(x===t?' act':'');
+    document.getElementById('tab-'+x).className='tab'+(x===t?' act':'');
+  });
+  window.scrollTo(0,0);
+}
+
+// ── VACACIONES ──
+// Días hábiles = lunes a viernes (para feriado legal el sábado es SIEMPRE
+// inhábil, art. 69 Código del Trabajo). Feriados nacionales se ajustan
+// manualmente al aprobar la solicitud.
+function diasHabiles(desde,hasta){
+  const d1=new Date(desde+'T12:00:00'), d2=new Date(hasta+'T12:00:00');
+  if(isNaN(d1)||isNaN(d2)||d2<d1) return 0;
+  let n=0, d=new Date(d1);
+  while(d<=d2){ const wd=d.getDay(); if(wd>=1&&wd<=5) n++; d.setDate(d.getDate()+1); }
+  return n;
+}
+
+function calcVacDias(){
+  const de=document.getElementById('vacDesde').value, ha=document.getElementById('vacHasta').value;
+  const el=document.getElementById('vacCalc');
+  if(!de||!ha){ el.innerHTML='<span>📐</span><div>Selecciona las fechas — los días hábiles se calculan solos.</div>'; return; }
+  const n=diasHabiles(de,ha);
+  const saldo=SES?.data?.vacaciones?.saldo;
+  let extra='';
+  if(typeof saldo==='number'&&n>saldo) extra=` <strong style="color:var(--red)">⚠ supera tu saldo (${saldo})</strong>`;
+  el.innerHTML=`<span>📐</span><div>Son <strong>${n} día${n!==1?'s':''} hábiles</strong> (lun-vie, sin contar sábados ni domingos).${extra}</div>`;
+}
+
+async function solicitarVac(){
+  const de=document.getElementById('vacDesde').value, ha=document.getElementById('vacHasta').value;
+  if(!de||!ha){ toast('Selecciona desde y hasta'); return; }
+  const n=diasHabiles(de,ha);
+  if(n<=0){ toast('Rango de fechas inválido'); return; }
+  const btn=document.getElementById('btnVac');
+  btn.disabled=true; btn.textContent='⏳ Enviando…';
+  try{
+    const res=await fetch(SHEETS_URL,{method:'POST',body:JSON.stringify({
+      tipo:'vacacion', token:APP_TOKEN, nombre:SES.nombre, pin:SES.pin,
+      desde:de, hasta:ha, comentario:document.getElementById('vacObs').value.trim(),
+    })});
+    const d=await res.json();
+    if(d.ok){
+      toast('✓ Solicitud enviada — queda pendiente de aprobación');
+      const sols=SES.data.vacaciones.solicitudes||[];
+      sols.unshift({desde:de,hasta:ha,dias:n,comentario:document.getElementById('vacObs').value.trim(),estado:'Pendiente'});
+      SES.data.vacaciones.solicitudes=sols;
+      renderVacList(sols);
+      document.getElementById('vacDesde').value=''; document.getElementById('vacHasta').value='';
+      document.getElementById('vacObs').value=''; calcVacDias();
+    } else toast('Error: '+(d.mensaje||'no se pudo enviar'));
+  }catch(e){ toast('Sin conexión — intenta de nuevo'); }
+  btn.disabled=false; btn.textContent='📨 Enviar Solicitud';
+}
+</script>
+</body>
+</html>
