@@ -74,6 +74,22 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   </div>
   <div id="vacWrap"><div class="empty">Cargando solicitudes…</div></div>
 
+  <!-- ASISTENCIA DEL MES (Bloque 10) -->
+  <div class="sec-head">
+    <div class="sec-title">🗓️ Asistencia del mes</div>
+    <span class="sec-count" id="countAsis">—</span>
+  </div>
+  <div id="asisWrap"><div class="empty">Cargando asistencia…</div></div>
+  <div class="ibox" style="margin-top:8px"><span>ℹ</span><div>Registro operativo que pasa el supervisor desde la app de Tickets. La marcación legal sigue siendo GeoVictoria.</div></div>
+
+  <!-- CRUCE GEOVICTORIA (Bloque 13) -->
+  <div class="sec-head">
+    <div class="sec-title">📡 Cruce GeoVictoria</div>
+    <span class="sec-count" id="countGeo">—</span>
+  </div>
+  <div id="geoWrap"><div class="empty">Cargando cruce…</div></div>
+  <div class="ibox" style="margin-top:8px"><span>📥</span><div>Cada semana: descarga el export de marcaciones de GeoVictoria y pégalo tal cual en la hoja <strong>GeoVictoria</strong> de la planilla. Aquí aparecerán los días con ticket de producción pero sin marcación.</div></div>
+
   <!-- NÓMINA -->
   <div class="sec-head">
     <div class="sec-title">👷 Nómina activa</div>
@@ -167,6 +183,67 @@ async function responderVac(id,estado,nombre){
   }catch(e){ showToast('Error de conexión'); }
 }
 
+// ─── ASISTENCIA DEL MES (Bloque 10) ───
+async function cargarAsistencia(){
+  const wrap=document.getElementById('asisWrap');
+  try{
+    const d=new Date();
+    const mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const res=await fetch(`${SHEETS_URL}?action=asistencia_app&mes=${mes}`);
+    const j=await res.json();
+    if(!j.ok) throw new Error(j.mensaje||'error');
+    const rs=j.resumen||[];
+    document.getElementById('countAsis').textContent=rs.length?rs.length+' con marcas':'sin marcas aún';
+    if(!rs.length){ wrap.innerHTML='<div class="empty">Aún no se pasa lista este mes — se hace desde la app de Tickets → 🗓️ Asistencia</div>'; return; }
+    wrap.innerHTML=rs.map(r=>`<div class="row" style="padding:8px 4px;border-bottom:1px solid rgba(53,56,73,.4);font-size:13px">
+      <div style="font-weight:600">${esc(r.nombre)}</div>
+      <div style="font-family:var(--fm);font-size:11px">
+        <span style="color:var(--green)">✓ ${r.presente}</span> ·
+        <span style="color:var(--amber)">⏰ ${r.atraso}</span> ·
+        <span style="color:var(--red)">✕ ${r.ausente}</span>
+      </div>
+    </div>`).join('');
+  }catch(e){
+    wrap.innerHTML='<div class="empty">⚠️ Requiere backend actualizado (Bloque 10)</div>';
+    document.getElementById('countAsis').textContent='—';
+  }
+}
+
+// ─── CRUCE GEOVICTORIA (Bloque 13) ───
+async function cargarCruceGeo(){
+  const wrap=document.getElementById('geoWrap');
+  try{
+    const d=new Date();
+    const mes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const res=await fetch(`${SHEETS_URL}?action=crucegeo&mes=${mes}`);
+    const j=await res.json();
+    if(!j.ok) throw new Error(j.mensaje||'error');
+    const cr=j.cruce||[];
+    if(!j.marcasGeo){
+      document.getElementById('countGeo').textContent='sin datos geo';
+      wrap.innerHTML='<div class="empty">La hoja GeoVictoria está vacía este mes — pega el export para activar el cruce</div>';
+      return;
+    }
+    const conProblema=cr.filter(c=>c.sinMarcar.length>0);
+    document.getElementById('countGeo').textContent=conProblema.length?`⚠ ${conProblema.length} con días sin marcar`:'✓ todo cuadra';
+    if(!cr.length){ wrap.innerHTML='<div class="empty">Sin producción registrada este mes</div>'; return; }
+    wrap.innerHTML=cr.map(c=>{
+      const alerta=c.sinMarcar.length>0;
+      return `<div class="row" style="padding:8px 4px;border-bottom:1px solid rgba(53,56,73,.4);font-size:13px;${alerta?'background:rgba(239,68,68,.05)':''}">
+        <div>
+          <div style="font-weight:600">${esc(c.nombre)}</div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--fm)">producción: ${c.diasProd} día${c.diasProd!==1?'s':''} · marcó: ${c.diasGeo}</div>
+          ${alerta?`<div style="font-size:10px;color:var(--red);font-family:var(--fm);margin-top:2px">⚠ Sin marcar: ${c.sinMarcar.map(esc).join(' · ')}</div>`:''}
+        </div>
+        <span style="font-family:var(--fm);font-size:12px;color:${alerta?'var(--red)':'var(--green)'}">${alerta?c.sinMarcar.length+' ⚠':'✓'}</span>
+      </div>`;
+    }).join('');
+  }catch(e){
+    wrap.innerHTML='<div class="empty">⚠️ Requiere backend actualizado (Bloque 13)</div>';
+    document.getElementById('countGeo').textContent='—';
+  }
+}
+
 // ─── NÓMINA ───
 async function cargarNomina(){
   const wrap=document.getElementById('nomWrap');
@@ -195,8 +272,10 @@ async function cargarNomina(){
   const D=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   document.getElementById('topDate').textContent=`${now.getDate()} ${M[now.getMonth()]} ${now.getFullYear()}`;
   document.getElementById('topDay').textContent=D[now.getDay()];
-  cargarVacaciones(); cargarNomina();
+  cargarVacaciones(); cargarNomina(); cargarAsistencia(); cargarCruceGeo();
   setInterval(cargarVacaciones,5*60*1000);
+  setInterval(cargarAsistencia,5*60*1000);
+  setInterval(cargarCruceGeo,15*60*1000);
 })();
 </script>
 </body>

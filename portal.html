@@ -128,6 +128,23 @@ select option{background:#1c1e28}
     </div>
   </div>
 
+  <!-- VISTA MI PAGO (Bloque 14) -->
+  <div class="view" id="view-pago">
+    <div class="kcard full" style="text-align:center;padding:18px;margin-bottom:12px">
+      <div class="klbl">Total del periodo</div>
+      <div class="saldo-big" id="pgTotal" style="color:var(--amber)">—</div>
+      <div class="ksub" id="pgPeriodo">—</div>
+    </div>
+    <div class="kgrid" style="margin-top:0">
+      <div class="kcard"><div class="klbl">✓ Ya pagado</div><div class="kval green" id="pgPagado">—</div></div>
+      <div class="kcard"><div class="klbl">⏳ Pendiente</div><div class="kval amber" id="pgPend">—</div></div>
+    </div>
+    <div class="panel"><div class="ph"><span>🧾</span><span class="ph-t">Detalle de mi pago</span></div>
+      <div class="pb" id="pgLista"><div class="empty">Sin registros del periodo</div></div>
+    </div>
+    <div class="ibox blue" style="margin-bottom:0"><span>ℹ</span><div>Resumen simplificado de montos <strong>líquidos</strong>. Tu liquidación oficial de sueldo es el documento formal que entrega administración.</div></div>
+  </div>
+
   <!-- VISTA VACACIONES -->
   <div class="view" id="view-vacas">
     <div class="kcard full" style="text-align:center;padding:20px;margin-bottom:12px">
@@ -162,6 +179,7 @@ select option{background:#1c1e28}
 <!-- TABS -->
 <div class="tabs" id="tabs" style="display:none">
   <div class="tab act" id="tab-resumen" onclick="verTab('resumen')"><span class="ti">📊</span>Resumen</div>
+  <div class="tab" id="tab-pago" onclick="verTab('pago')"><span class="ti">💵</span>Mi Pago</div>
   <div class="tab" id="tab-vacas" onclick="verTab('vacas')"><span class="ti">🏖️</span>Vacaciones</div>
   <div class="tab" id="tab-avisos" onclick="verTab('avisos')"><span class="ti">📢</span>Avisos</div>
 </div>
@@ -278,6 +296,17 @@ function render(){
     ? mesP.registros.map(r=>`<div class="row"><div><div>${esc(r.fecha)} · ${esc(r.funcion||'')}</div><div class="sub">${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</div></div><div class="n green">${fmt$(r.bono)}</div></div>`).join('')
     : '<div class="empty">Sin registros este mes</div>';
 
+  // Mi Pago (Bloque 14)
+  const pg=d.pago||{items:[],total:0,pagado:0,pendiente:0};
+  const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  document.getElementById('pgTotal').textContent=fmt$(pg.total);
+  document.getElementById('pgPagado').textContent=fmt$(pg.pagado);
+  document.getElementById('pgPend').textContent=fmt$(pg.pendiente);
+  if(pg.periodo){ const pp=pg.periodo.split('-'); document.getElementById('pgPeriodo').textContent=MESL[parseInt(pp[1],10)-1]+' '+pp[0]; }
+  document.getElementById('pgLista').innerHTML=(pg.items||[]).length
+    ? pg.items.map(it=>`<div class="row"><div><div>${esc(it.concepto)}</div><div class="sub">${it.estado==='Pagado'?'✓ Pagado'+(it.fechaPago?' · '+esc(it.fechaPago):''):'⏳ Pendiente'}${it.nota?' · '+esc(it.nota):''}</div></div><div class="n" style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">${fmt$(it.monto)}</div></div>`).join('')
+    : '<div class="empty">Aún no hay pagos cargados para este periodo</div>';
+
   // Vacaciones
   const v=d.vacaciones||{};
   document.getElementById('kSaldo').textContent=(v.saldo??'—');
@@ -301,7 +330,7 @@ function renderVacList(sols){
 
 // ── TABS ──
 function verTab(t){
-  ['resumen','vacas','avisos'].forEach(x=>{
+  ['resumen','pago','vacas','avisos'].forEach(x=>{
     document.getElementById('view-'+x).className='view'+(x===t?' act':'');
     document.getElementById('tab-'+x).className='tab'+(x===t?' act':'');
   });

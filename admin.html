@@ -335,7 +335,11 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
         <input type="date" id="repHasta" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
       </div>
     </div>
-    <button onclick="generarReporte()" id="btnReporte" style="width:100%;background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">📈 Generar Reporte</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="generarReporte()" id="btnReporte" style="flex:1;background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">📈 Producción</button>
+      <button onclick="generarReportePago()" id="btnReportePago" style="flex:1;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">💵 Pago</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:6px">Producción usa el rango de fechas · Pago usa el mes de "Desde" (liquidación simplificada)</div>
     <div id="repOut" style="margin-top:12px"></div>
   </div>
 
@@ -1088,6 +1092,76 @@ async function generarReporte(){
     out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">⚠️ '+esc(e.message)+'</div></div>';
   }
   btn.disabled=false; btn.textContent='📈 Generar Reporte';
+}
+
+// ─── REPORTE DE PAGO / LIQUIDACIÓN SIMPLIFICADA (Bloque 14) ──────────
+let _ultimoPago = null;
+
+async function generarReportePago(){
+  const nombre=document.getElementById('repNombre').value;
+  const desde=document.getElementById('repDesde').value;
+  const out=document.getElementById('repOut');
+  if(!desde){ showToast('Selecciona la fecha "Desde" (define el mes)'); return; }
+  const mes=desde.slice(0,7);
+  const btn=document.getElementById('btnReportePago');
+  btn.disabled=true; btn.textContent='⏳…';
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=pagos&mes=${mes}&nombre=${encodeURIComponent(nombre)}`);
+    const d=await res.json();
+    if(!d.ok) throw new Error(d.mensaje||'error');
+    _ultimoPago={...d, nombre};
+    const pagos=d.pagos||[], t=d.totales||{};
+    if(!pagos.length){
+      out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin pagos cargados para '+esc(mes)+'<br><span style="font-size:10px;color:var(--muted)">cárgalos en la hoja "Pagos" de la planilla</span></div></div>';
+    } else {
+      const bloques=pagos.map(p=>`
+        <div style="background:var(--ink3);border-radius:6px;padding:10px 12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-weight:600;font-size:13px">${esc(p.nombre)}</div>
+            <div style="font-family:var(--fm);font-size:13px;font-weight:700;color:var(--amber)">$${p.total.toLocaleString('es-CL')}</div>
+          </div>
+          ${p.items.map(it=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;font-family:var(--fm)">
+            <span style="color:var(--fog)">${it.estado==='Pagado'?'✓':'⏳'} ${esc(it.concepto)}</span>
+            <span style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">$${it.monto.toLocaleString('es-CL')}</span>
+          </div>`).join('')}
+          <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fm);margin-top:5px;padding-top:5px;border-top:1px solid rgba(53,56,73,.6)">
+            <span style="color:var(--green)">Pagado: $${p.pagado.toLocaleString('es-CL')}</span>
+            <span style="color:${p.pendiente>0?'var(--amber)':'var(--muted)'}">Pendiente: $${p.pendiente.toLocaleString('es-CL')}</span>
+          </div>
+        </div>`).join('');
+      out.innerHTML=`
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:var(--amber)">$${(t.total||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Total ${esc(mes)}</div></div>
+          <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:var(--green)">$${(t.pagado||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Pagado</div></div>
+          <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:${(t.pendiente||0)>0?'var(--red)':'var(--muted)'}">$${(t.pendiente||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Pendiente</div></div>
+        </div>
+        ${bloques}
+        <button onclick="pagoWA()" style="width:100%;margin-top:6px;background:#25D366;border:none;border-radius:6px;color:#fff;font-weight:700;font-size:12px;padding:9px;cursor:pointer">📱 Enviar detalle por WhatsApp</button>`;
+    }
+  }catch(e){
+    out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">⚠️ '+esc(e.message)+'</div></div>';
+  }
+  btn.disabled=false; btn.textContent='💵 Pago';
+}
+
+function pagoWA(){
+  if(!_ultimoPago) return;
+  const d=_ultimoPago;
+  const MESL=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const pp=(d.periodo||'').split('-');
+  const mesTxt=pp.length>1?MESL[parseInt(pp[1],10)-1]+' '+pp[0]:d.periodo;
+  let msg=`💵 *Detalle de Pago · ${mesTxt}*\n_Adoquines Modulares_\n`;
+  (d.pagos||[]).forEach(p=>{
+    msg+=`─────────────────────\n👷 *${p.nombre}*\n`;
+    p.items.forEach(it=>{ msg+=`${it.estado==='Pagado'?'✓':'⏳'} ${it.concepto}: $${it.monto.toLocaleString('es-CL')}\n`; });
+    msg+=`*Total: $${p.total.toLocaleString('es-CL')}*`;
+    if(p.pendiente>0) msg+=` · pendiente: $${p.pendiente.toLocaleString('es-CL')}`;
+    msg+=`\n`;
+  });
+  msg+=`─────────────────────\n_Montos líquidos. La liquidación oficial la entrega administración._`;
+  const w=WORKERS.find(x=>x.nom===d.nombre);
+  const tel=(w&&w.tel&&!/^569000000/.test(w.tel))?w.tel:'';
+  window.open(`https://wa.me/${tel}?text=`+encodeURIComponent(msg),'_blank');
 }
 
 function reporteWA(){
