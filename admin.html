@@ -335,11 +335,20 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
         <input type="date" id="repHasta" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
       </div>
     </div>
+    <div style="display:flex;gap:8px;align-items:end;margin-bottom:10px;padding-top:10px;border-top:1px solid rgba(53,56,73,.6)">
+      <div style="flex:1">
+        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Mes a pagar (cierre de mes)</div>
+        <input type="month" id="repMesPago" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);font-family:var(--fm);white-space:nowrap;padding-bottom:9px;cursor:pointer">
+        <input type="checkbox" id="repIncluirBonos" style="accent-color:var(--amber)" onchange="if(_ultimoPago) generarReportePago()"> Incluir detalle de bonos
+      </label>
+    </div>
     <div style="display:flex;gap:8px">
       <button onclick="generarReporte()" id="btnReporte" style="flex:1;background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">📈 Producción</button>
       <button onclick="generarReportePago()" id="btnReportePago" style="flex:1;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">💵 Pago</button>
     </div>
-    <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:6px">Producción usa el rango de fechas · Pago usa el mes de "Desde" (liquidación simplificada)</div>
+    <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:6px">Producción usa el rango de fechas · Pago usa el mes seleccionado arriba (liquidación de mes cerrado)</div>
     <div id="repOut" style="margin-top:12px"></div>
   </div>
 
@@ -1099,10 +1108,10 @@ let _ultimoPago = null;
 
 async function generarReportePago(){
   const nombre=document.getElementById('repNombre').value;
-  const desde=document.getElementById('repDesde').value;
+  const mes=document.getElementById('repMesPago').value;
+  const incluirBonos=document.getElementById('repIncluirBonos').checked;
   const out=document.getElementById('repOut');
-  if(!desde){ showToast('Selecciona la fecha "Desde" (define el mes)'); return; }
-  const mes=desde.slice(0,7);
+  if(!mes){ showToast('Selecciona el mes a pagar'); return; }
   const btn=document.getElementById('btnReportePago');
   btn.disabled=true; btn.textContent='⏳…';
   try{
@@ -1114,16 +1123,23 @@ async function generarReportePago(){
     if(!pagos.length){
       out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin pagos cargados para '+esc(mes)+'<br><span style="font-size:10px;color:var(--muted)">cárgalos en la hoja "Pagos" de la planilla</span></div></div>';
     } else {
+      const esBono = c => /bono|semana corrida|saldo mes/i.test(c||'');
       const bloques=pagos.map(p=>`
         <div style="background:var(--ink3);border-radius:6px;padding:10px 12px;margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <div style="font-weight:600;font-size:13px">${esc(p.nombre)}</div>
             <div style="font-family:var(--fm);font-size:13px;font-weight:700;color:var(--amber)">$${p.total.toLocaleString('es-CL')}</div>
           </div>
-          ${p.items.map(it=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;font-family:var(--fm)">
-            <span style="color:var(--fog)">${it.estado==='Pagado'?'✓':'⏳'} ${esc(it.concepto)}</span>
-            <span style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">$${it.monto.toLocaleString('es-CL')}</span>
-          </div>`).join('')}
+          ${p.items.map(it=>{
+            const mostrarNota = it.nota && (!esBono(it.concepto) || incluirBonos);
+            return `<div style="padding:2px 0;font-family:var(--fm)">
+              <div style="display:flex;justify-content:space-between;font-size:11px">
+                <span style="color:var(--fog)">${it.estado==='Pagado'?'✓':'⏳'} ${esc(it.concepto)}</span>
+                <span style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">$${it.monto.toLocaleString('es-CL')}</span>
+              </div>
+              ${mostrarNota?`<div style="font-size:9px;color:var(--muted);padding-left:1px">${esc(it.nota)}${it.fechaPago?' · pagado '+esc(it.fechaPago):''}</div>`:''}
+            </div>`;
+          }).join('')}
           <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fm);margin-top:5px;padding-top:5px;border-top:1px solid rgba(53,56,73,.6)">
             <span style="color:var(--green)">Pagado: $${p.pagado.toLocaleString('es-CL')}</span>
             <span style="color:${p.pendiente>0?'var(--amber)':'var(--muted)'}">Pendiente: $${p.pendiente.toLocaleString('es-CL')}</span>

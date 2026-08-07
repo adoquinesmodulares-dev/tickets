@@ -109,7 +109,14 @@ select option{background:#1c1e28}
 
 <!-- ══════ APP ══════ -->
 <div class="wrap" id="vApp" style="display:none">
-  <div class="sh"><h2 id="hNombre">—</h2><p id="hMes">—</p></div>
+  <div class="sh">
+    <h2 id="hNombre">—</h2>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="cambiarMes(-1)" style="background:none;border:1px solid var(--brd,#333);border-radius:6px;color:inherit;font-size:14px;padding:2px 9px;cursor:pointer" aria-label="Mes anterior">‹</button>
+      <p id="hMes" style="margin:0">—</p>
+      <button id="btnMesNext" onclick="cambiarMes(1)" style="background:none;border:1px solid var(--brd,#333);border-radius:6px;color:inherit;font-size:14px;padding:2px 9px;cursor:pointer" aria-label="Mes siguiente">›</button>
+    </div>
+  </div>
 
   <!-- VISTA RESUMEN -->
   <div class="view act" id="view-resumen">
@@ -198,9 +205,28 @@ let NOMBRES = [
 ];
 
 let SES = null;   // { nombre, pin, data }
+let mesActual = null; // yyyy-mm que se está viendo (arranca en el mes actual)
 
 function hoyLocal(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function mesLocal(){ return hoyLocal().slice(0,7); }
+
+// ── NAVEGACIÓN ENTRE MESES (Resumen + Mi Pago comparten el mes elegido) ──
+async function cambiarMes(delta){
+  if(!SES) return;
+  const [y,m]=mesActual.split('-').map(Number);
+  const d=new Date(y,m-1+delta,1);
+  const nuevoMes=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  if(nuevoMes>mesLocal()) return; // no ver meses futuros
+  mesActual=nuevoMes;
+  document.getElementById('btnMesNext').style.opacity=(mesActual>=mesLocal())?'.35':'1';
+  try{
+    const res=await fetch(`${SHEETS_URL}?action=portal&nombre=${encodeURIComponent(SES.nombre)}&pin=${SES.pin}&mes=${mesActual}`);
+    const d2=await res.json();
+    if(!d2.ok){ toast(d2.mensaje||'No se pudo cargar ese mes'); return; }
+    SES.data=d2;
+    render();
+  }catch(e){ toast('Sin conexión — intenta de nuevo'); }
+}
 function fmt$(n){ return '$'+(n||0).toLocaleString('es-CL'); }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -240,7 +266,8 @@ async function entrar(auto){
   const btn=document.getElementById('btnEntrar');
   btn.disabled=true; btn.textContent='⏳ Verificando…';
   try{
-    const res=await fetch(`${SHEETS_URL}?action=portal&nombre=${encodeURIComponent(nombre)}&pin=${pin}&mes=${mesLocal()}`);
+    mesActual=mesLocal();
+    const res=await fetch(`${SHEETS_URL}?action=portal&nombre=${encodeURIComponent(nombre)}&pin=${pin}&mes=${mesActual}`);
     const d=await res.json();
     if(!d.ok){ toast(d.mensaje||'PIN incorrecto'); btn.disabled=false; btn.textContent='Entrar →'; if(auto) localStorage.removeItem('fp_portal_ses'); return; }
     SES={nombre,pin,data:d};
@@ -270,9 +297,10 @@ function render(){
   document.getElementById('tabs').style.display='flex';
   document.getElementById('btnSalir').style.display='inline-block';
   document.getElementById('hNombre').textContent='👷 '+SES.nombre.split(' ')[0];
-  const [y,m]=mesLocal().split('-');
+  const [y,m]=mesActual.split('-');
   const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  document.getElementById('hMes').textContent=MESES[parseInt(m,10)-1]+' '+y;
+  document.getElementById('hMes').textContent=MESES[parseInt(m,10)-1]+' '+y+(mesActual!==mesLocal()?' · cerrado':'');
+  document.getElementById('btnMesNext').style.opacity=(mesActual>=mesLocal())?'.35':'1';
 
   // KPIs
   const hoy=d.prod?.hoy||{unidades:0,bono:0,registros:[]};
