@@ -321,34 +321,42 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
     <span class="sec-count">rango de fechas</span>
   </div>
   <div style="background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:20px">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-      <div>
-        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Colaborador</div>
-        <select id="repNombre" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:8px"><option value="">Todos</option></select>
-      </div>
-      <div>
-        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Desde</div>
-        <input type="date" id="repDesde" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
-      </div>
-      <div>
-        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Hasta</div>
-        <input type="date" id="repHasta" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
+    <div style="margin-bottom:10px">
+      <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Colaborador</div>
+      <select id="repNombre" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:8px"><option value="">Todos</option></select>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button type="button" id="repModoMes" onclick="setRepModo('mes')" style="flex:1;background:var(--amber);border:none;border-radius:6px;color:#000;font-weight:700;font-size:11px;padding:8px;cursor:pointer">📅 Mes cerrado</button>
+      <button type="button" id="repModoPeriodo" onclick="setRepModo('periodo')" style="flex:1;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--muted);font-weight:700;font-size:11px;padding:8px;cursor:pointer">🗓️ Período personalizado</button>
+    </div>
+
+    <div id="repMesBox">
+      <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Mes</div>
+      <input type="month" id="repMesPago" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark;margin-bottom:10px">
+    </div>
+    <div id="repPeriodoBox" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Desde</div>
+          <input type="date" id="repDesde" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
+        </div>
+        <div>
+          <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Hasta</div>
+          <input type="date" id="repHasta" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
+        </div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;align-items:end;margin-bottom:10px;padding-top:10px;border-top:1px solid rgba(53,56,73,.6)">
-      <div style="flex:1">
-        <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Mes a pagar (cierre de mes)</div>
-        <input type="month" id="repMesPago" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
-      </div>
-      <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);font-family:var(--fm);white-space:nowrap;padding-bottom:9px;cursor:pointer">
-        <input type="checkbox" id="repIncluirBonos" style="accent-color:var(--amber)" onchange="if(_ultimoPago) generarReportePago()"> Incluir detalle de bonos
-      </label>
+
+    <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Qué incluir</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:6px;font-size:11px;color:var(--fog);font-family:var(--fm)">
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incSueldo" checked style="accent-color:var(--amber)"> Sueldo Base</label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incSaldoAnt" checked style="accent-color:var(--amber)"> Saldo Mes Anterior</label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incBonoProd" checked style="accent-color:var(--amber)"> Bono Producción</label>
     </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="generarReporte()" id="btnReporte" style="flex:1;background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">📈 Producción</button>
-      <button onclick="generarReportePago()" id="btnReportePago" style="flex:1;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer">💵 Pago</button>
-    </div>
-    <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:6px">Producción usa el rango de fechas · Pago usa el mes seleccionado arriba (liquidación de mes cerrado)</div>
+    <div id="repPeriodoAviso" style="display:none;font-size:9px;color:var(--muted);font-family:var(--fm);margin:2px 0 10px">ℹ️ En período personalizado solo se calcula Bono Producción (exacto, desde los tickets). Sueldo Base y Saldo Mes Anterior son montos mensuales cerrados y no aplican aquí.</div>
+
+    <button onclick="generarReporteUnificado()" id="btnReporteUnif" style="width:100%;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer;margin-top:4px">📊 Generar Reporte</button>
     <div id="repOut" style="margin-top:12px"></div>
   </div>
 
@@ -1071,7 +1079,7 @@ async function generarReporte(){
   const hasta=document.getElementById('repHasta').value;
   const out=document.getElementById('repOut');
   if(!desde||!hasta){ showToast('Selecciona desde y hasta'); return; }
-  const btn=document.getElementById('btnReporte');
+  const btn=document.getElementById('btnReporteUnif');
   btn.disabled=true; btn.textContent='⏳ Generando…';
   try{
     const res=await fetch(`${SHEETS_URL}?action=reporte&desde=${desde}&hasta=${hasta}&nombre=${encodeURIComponent(nombre)}`);
@@ -1100,41 +1108,92 @@ async function generarReporte(){
   }catch(e){
     out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">⚠️ '+esc(e.message)+'</div></div>';
   }
-  btn.disabled=false; btn.textContent='📈 Generar Reporte';
+  btn.disabled=false; btn.textContent='📊 Generar Reporte';
+}
+
+// ─── REPORTE POR COLABORADOR — modo unificado (mes cerrado / período) ─
+let repModo='mes'; // 'mes' | 'periodo'
+
+function setRepModo(m){
+  repModo=m;
+  const activo={background:'var(--amber)',color:'#000',border:'none'};
+  const inactivo={background:'var(--ink3)',color:'var(--muted)',border:'1px solid var(--brd)'};
+  const bMes=document.getElementById('repModoMes'), bPer=document.getElementById('repModoPeriodo');
+  Object.assign(bMes.style, m==='mes'?activo:inactivo);
+  Object.assign(bPer.style, m==='periodo'?activo:inactivo);
+  document.getElementById('repMesBox').style.display = m==='mes'?'block':'none';
+  document.getElementById('repPeriodoBox').style.display = m==='periodo'?'block':'none';
+  document.getElementById('repPeriodoAviso').style.display = m==='periodo'?'block':'none';
+  const chkSueldo=document.getElementById('incSueldo'), chkSaldoAnt=document.getElementById('incSaldoAnt');
+  chkSueldo.disabled = (m==='periodo'); chkSaldoAnt.disabled = (m==='periodo');
+  chkSueldo.checked = (m==='mes'); chkSaldoAnt.checked = (m==='mes');
+  document.getElementById('repOut').innerHTML='';
+}
+
+function generarReporteUnificado(){
+  return repModo==='mes' ? generarReportePago() : generarReporte();
 }
 
 // ─── REPORTE DE PAGO / LIQUIDACIÓN SIMPLIFICADA (Bloque 14) ──────────
 let _ultimoPago = null;
 
+function categoriaConcepto(c){
+  c=c||'';
+  if(c==='Sueldo Base (prorrateado)') return 'sueldo';
+  if(c==='Saldo Mes Anterior') return 'saldoAnt';
+  if(/bono producci/i.test(c)) return 'bonoProd';
+  return 'otro';
+}
+
+// "Sueldo Base (prorrateado)" + nota "28 días trabajados" → "Sueldo Base (28 días trabajados)"
+function etiquetaConcepto(it){
+  if(it.concepto==='Sueldo Base (prorrateado)' && it.nota && /d[ií]as trabajados/i.test(it.nota)){
+    return 'Sueldo Base ('+it.nota+')';
+  }
+  return it.concepto;
+}
+
 async function generarReportePago(){
   const nombre=document.getElementById('repNombre').value;
   const mes=document.getElementById('repMesPago').value;
-  const incluirBonos=document.getElementById('repIncluirBonos').checked;
+  const incMap={ sueldo:document.getElementById('incSueldo').checked,
+                 saldoAnt:document.getElementById('incSaldoAnt').checked,
+                 bonoProd:document.getElementById('incBonoProd').checked,
+                 otro:true };
   const out=document.getElementById('repOut');
   if(!mes){ showToast('Selecciona el mes a pagar'); return; }
-  const btn=document.getElementById('btnReportePago');
+  if(!incMap.sueldo && !incMap.saldoAnt && !incMap.bonoProd){ showToast('Marca al menos un ítem en "Qué incluir"'); return; }
+  const btn=document.getElementById('btnReporteUnif');
   btn.disabled=true; btn.textContent='⏳…';
   try{
     const res=await fetch(`${SHEETS_URL}?action=pagos&mes=${mes}&nombre=${encodeURIComponent(nombre)}`);
     const d=await res.json();
     if(!d.ok) throw new Error(d.mensaje||'error');
-    _ultimoPago={...d, nombre};
-    const pagos=d.pagos||[], t=d.totales||{};
-    if(!pagos.length){
+    // Filtra cada trabajador según el checklist y recalcula sus totales
+    const pagosFiltrados=(d.pagos||[]).map(p=>{
+      const items=p.items.filter(it=>incMap[categoriaConcepto(it.concepto)]);
+      const total=items.reduce((s,it)=>s+it.monto,0);
+      const pagado=items.filter(it=>it.estado==='Pagado').reduce((s,it)=>s+it.monto,0);
+      const pendiente=total-pagado;
+      return {nombre:p.nombre, items, total, pagado, pendiente};
+    }).filter(p=>p.items.length);
+    const t=pagosFiltrados.reduce((a,p)=>{a.total+=p.total;a.pagado+=p.pagado;a.pendiente+=p.pendiente;return a;},{total:0,pagado:0,pendiente:0});
+    _ultimoPago={periodo:d.periodo, pagos:pagosFiltrados, totales:t, nombre};
+    if(!pagosFiltrados.length){
       out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin pagos cargados para '+esc(mes)+'<br><span style="font-size:10px;color:var(--muted)">cárgalos en la hoja "Pagos" de la planilla</span></div></div>';
     } else {
-      const esBono = c => /bono|semana corrida|saldo mes/i.test(c||'');
-      const bloques=pagos.map(p=>`
+      const bloques=pagosFiltrados.map(p=>`
         <div style="background:var(--ink3);border-radius:6px;padding:10px 12px;margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <div style="font-weight:600;font-size:13px">${esc(p.nombre)}</div>
             <div style="font-family:var(--fm);font-size:13px;font-weight:700;color:var(--amber)">$${p.total.toLocaleString('es-CL')}</div>
           </div>
           ${p.items.map(it=>{
-            const mostrarNota = it.nota && (!esBono(it.concepto) || incluirBonos);
+            const esDiasTrabajados = it.concepto==='Sueldo Base (prorrateado)' && it.nota && /d[ií]as trabajados/i.test(it.nota);
+            const mostrarNota = it.nota && !esDiasTrabajados;
             return `<div style="padding:2px 0;font-family:var(--fm)">
               <div style="display:flex;justify-content:space-between;font-size:11px">
-                <span style="color:var(--fog)">${it.estado==='Pagado'?'✓':'⏳'} ${esc(it.concepto)}</span>
+                <span style="color:var(--fog)">${it.estado==='Pagado'?'✓':'⏳'} ${esc(etiquetaConcepto(it))}</span>
                 <span style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">$${it.monto.toLocaleString('es-CL')}</span>
               </div>
               ${mostrarNota?`<div style="font-size:9px;color:var(--muted);padding-left:1px">${esc(it.nota)}${it.fechaPago?' · pagado '+esc(it.fechaPago):''}</div>`:''}
@@ -1145,7 +1204,9 @@ async function generarReportePago(){
             <span style="color:${p.pendiente>0?'var(--amber)':'var(--muted)'}">Pendiente: $${p.pendiente.toLocaleString('es-CL')}</span>
           </div>
         </div>`).join('');
+      const parcial = !(incMap.sueldo&&incMap.saldoAnt&&incMap.bonoProd);
       out.innerHTML=`
+        ${parcial?'<div style="font-size:9px;color:var(--amber);font-family:var(--fm);margin-bottom:8px">⚠️ Reporte parcial — no incluye todos los ítems, no representa el pago completo del mes.</div>':''}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
           <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:var(--amber)">$${(t.total||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Total ${esc(mes)}</div></div>
           <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:var(--green)">$${(t.pagado||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Pagado</div></div>
@@ -1157,7 +1218,7 @@ async function generarReportePago(){
   }catch(e){
     out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">⚠️ '+esc(e.message)+'</div></div>';
   }
-  btn.disabled=false; btn.textContent='💵 Pago';
+  btn.disabled=false; btn.textContent='📊 Generar Reporte';
 }
 
 function pagoWA(){
@@ -1169,7 +1230,7 @@ function pagoWA(){
   let msg=`💵 *Detalle de Pago · ${mesTxt}*\n_Adoquines Modulares_\n`;
   (d.pagos||[]).forEach(p=>{
     msg+=`─────────────────────\n👷 *${p.nombre}*\n`;
-    p.items.forEach(it=>{ msg+=`${it.estado==='Pagado'?'✓':'⏳'} ${it.concepto}: $${it.monto.toLocaleString('es-CL')}\n`; });
+    p.items.forEach(it=>{ msg+=`${it.estado==='Pagado'?'✓':'⏳'} ${etiquetaConcepto(it)}: $${it.monto.toLocaleString('es-CL')}\n`; });
     msg+=`*Total: $${p.total.toLocaleString('es-CL')}*`;
     if(p.pendiente>0) msg+=` · pendiente: $${p.pendiente.toLocaleString('es-CL')}`;
     msg+=`\n`;
