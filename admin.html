@@ -474,6 +474,7 @@ const DIAS_ES  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 let ultimosDatos   = null;
 let ultimaProd     = {};
 let ultimasSalidas = {};
+let stockCache     = {}; // stock acumulado real (todos los meses) — desde action=stock
 let panelActual    = null;
 
 // ─── DATOS ADMIN COMPARTIDOS (Sheets, no localStorage) ────────────────
@@ -596,6 +597,10 @@ async function cargarDatos(){
         (d.despachos||[]).forEach(dep=>{ const k=(dep.modelo||'').trim().toLowerCase(); if(k) sal[k]=(sal[k]||0)+(dep.cantidad||0); });
         ultimasSalidas=sal; renderModelos();
       }).catch(()=>renderModelos());
+      fetch(`${SHEETS_URL}?action=stock`).then(r=>r.json()).then(d=>{
+        stockCache = (d.ok && d.stock) ? d.stock : {};
+        renderModelos();
+      }).catch(()=>{});
     } else { renderVacio(); setEstado('warn','Sin datos'); }
   } catch(e){ setEstado('err','Sin conexión'); if(!ultimosDatos) renderVacio(); }
   const ahora = new Date();
@@ -756,7 +761,9 @@ function getIngresos(){ return ADMIN_CACHE.ingresos; }
 function saveIngresos(a){ ADMIN_CACHE.ingresos = a; pushAdminData('ingresos'); }
 function getProdPorModelo(id){ return (ultimaProd[id]||0); }
 function getSalidasActual(id){ return (ultimasSalidas[id]||0)+getSalidas().filter(d=>d.modeloId===id).reduce((s,d)=>s+d.cantidad,0); }
-function getStockActual(id){ return getProdPorModelo(id)+getIngresos().filter(i=>i.modeloId===id).reduce((s,i)=>s+i.cantidad,0)-getSalidasActual(id); }
+// Stock real = acumulado histórico (todos los meses, desde action=stock) + ajustes manuales de Ingresos/Salidas.
+// Ya NO se calcula solo con la producción/despacho del mes en pantalla (eso reseteaba el stock a 0 cada mes 1).
+function getStockActual(id){ return (stockCache[id]||0)+getIngresos().filter(i=>i.modeloId===id).reduce((s,i)=>s+i.cantidad,0)-getSalidas().filter(d=>d.modeloId===id).reduce((s,d)=>s+d.cantidad,0); }
 function getEstClase(stock,meta){ if(meta<=0) return stock>0?'est-ok':'est-escaso'; const p=stock/meta; return p<=.15?'est-escaso':p<=.40?'est-bajo':p<=.85?'est-ok':'est-lleno'; }
 function getBarCol(est){ return {'est-escaso':'var(--red)','est-bajo':'var(--amber)','est-ok':'var(--green)','est-lleno':'var(--blue)'}[est]||'var(--brd)'; }
 
