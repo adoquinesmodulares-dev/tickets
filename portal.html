@@ -195,7 +195,7 @@ select option{background:#1c1e28}
 
 <script>
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
-const APP_TOKEN  = 'fp-adoq-2026';
+const APP_TOKEN  = 'fp-adoq-ecdfe5c1908c';
 
 // Respaldo offline — la nómina real llega desde Sheets (?action=config)
 let NOMBRES = [
@@ -332,7 +332,11 @@ function render(){
   document.getElementById('pgPend').textContent=fmt$(pg.pendiente);
   if(pg.periodo){ const pp=pg.periodo.split('-'); document.getElementById('pgPeriodo').textContent=MESL[parseInt(pp[1],10)-1]+' '+pp[0]; }
   document.getElementById('pgLista').innerHTML=(pg.items||[]).length
-    ? pg.items.map(it=>`<div class="row"><div><div>${esc(it.concepto)}</div><div class="sub">${it.estado==='Pagado'?'✓ Pagado'+(it.fechaPago?' · '+esc(it.fechaPago):''):'⏳ Pendiente'}${it.nota?' · '+esc(it.nota):''}</div></div><div class="n" style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">${fmt$(it.monto)}</div></div>`).join('')
+    ? pg.items.map(it=>{
+        const esDiasTrabajados = it.concepto==='Sueldo Base (prorrateado)' && it.nota && /d[ií]as trabajados/i.test(it.nota);
+        const etiqueta = esDiasTrabajados ? 'Sueldo Base ('+it.nota+')' : it.concepto;
+        return `<div class="row"><div><div>${esc(etiqueta)}</div><div class="sub">${it.estado==='Pagado'?'✓ Pagado'+(it.fechaPago?' · '+esc(it.fechaPago):''):'⏳ Pendiente'}${it.nota&&!esDiasTrabajados?' · '+esc(it.nota):''}</div></div><div class="n" style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">${fmt$(it.monto)}</div></div>`;
+      }).join('')
     : '<div class="empty">Aún no hay pagos cargados para este periodo</div>';
 
   // Vacaciones
