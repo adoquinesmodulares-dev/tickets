@@ -353,6 +353,8 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incSueldo" checked style="accent-color:var(--amber)"> Sueldo Base</label>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incSaldoAnt" checked style="accent-color:var(--amber)"> Saldo Mes Anterior</label>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incBonoProd" checked style="accent-color:var(--amber)"> Bono Producción</label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incOtrosBonos" style="accent-color:var(--amber)"> Otros Bonos</label>
+      <label id="lblDetalleProd" style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incDetalleProd" style="accent-color:var(--amber)"> Detalle de producción</label>
     </div>
     <div id="repPeriodoAviso" style="display:none;font-size:9px;color:var(--muted);font-family:var(--fm);margin:2px 0 10px">ℹ️ En período personalizado solo se calcula Bono Producción (exacto, desde los tickets). Sueldo Base y Saldo Mes Anterior son montos mensuales cerrados y no aplican aquí.</div>
 
@@ -427,11 +429,11 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 <script>
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbytgwJFhpJCcFaztevt2WG5QItLE4mlO_pVv8ax0dJ6x8oOBCc_IyIQlcVl6Vio-k2_cQ/exec';
 // Token compartido con el Apps Script — debe coincidir con APP_TOKEN en el backend
-const APP_TOKEN = 'fp-adoq-2026';
+const APP_TOKEN = 'fp-adoq-ecdfe5c1908c';
 
 // ─── PIN DE ACCESO ────────────────────────────────────────────────────
 // ⚠️ Cambia este PIN por uno propio antes de publicar
-const ADMIN_PIN = '2026';
+const ADMIN_PIN = '245686';
 (function gatePin(){
   if (sessionStorage.getItem('fp_admin_ok') === '1') return;
   for (let i = 0; i < 3; i++) {
@@ -475,6 +477,7 @@ let ultimosDatos   = null;
 let ultimaProd     = {};
 let ultimasSalidas = {};
 let stockCache     = {}; // stock acumulado real (todos los meses) — desde action=stock
+let stockMinCache  = {}; // Bloque A (2026-08): umbrales de alerta — desde Config (STOCK_MIN_*)
 let panelActual    = null;
 
 // ─── DATOS ADMIN COMPARTIDOS (Sheets, no localStorage) ────────────────
@@ -773,13 +776,18 @@ function renderModelos(){
     const stock=getStockActual(m.id);
     const prod=getProdPorModelo(m.id);
     const sal=getSalidasActual(m.id);
-    const est=getEstClase(stock,0);
+    const minimo=stockMinCache[m.id]||0;
+    // Bloque A (2026-08): el umbral real (hoja Config, STOCK_MIN_*) reemplaza
+    // el "0" fijo — así el color y la alerta reflejan el mínimo que definas.
+    const est=getEstClase(stock,minimo);
     const col=getBarCol(est);
-    const pct=prod>0?Math.min(100,Math.round(stock/prod*100)):0;
+    const pct=minimo>0?Math.min(100,Math.round(stock/minimo*100)):(prod>0?Math.min(100,Math.round(stock/prod*100)):0);
+    const bajo=minimo>0 && stock<minimo;
     return `<div class="mod-card ${est}">
       <div class="mod-nombre">${m.emoji} ${m.nombre}</div>
       <div class="mod-stock-big" style="color:${col}">${stock.toLocaleString('es-CL')}</div>
       <div class="mod-sub">Prod: ${prod.toLocaleString('es-CL')}<br>Desp: ${sal.toLocaleString('es-CL')}</div>
+      ${bajo?`<div style="font-size:9px;color:var(--red);font-family:var(--fm);margin-top:3px">⚠ bajo mínimo (${minimo.toLocaleString('es-CL')})</div>`:''}
       <div class="mod-bar-track"><div class="mod-bar-fill" style="width:${pct}%;background:${col}"></div></div>
     </div>`;
   }).join('');
@@ -1134,6 +1142,9 @@ function setRepModo(m){
   const chkSueldo=document.getElementById('incSueldo'), chkSaldoAnt=document.getElementById('incSaldoAnt');
   chkSueldo.disabled = (m==='periodo'); chkSaldoAnt.disabled = (m==='periodo');
   chkSueldo.checked = (m==='mes'); chkSaldoAnt.checked = (m==='mes');
+  // "Detalle de producción" solo aplica a Mes cerrado — en Período personalizado
+  // el detalle día a día ya se muestra siempre, así que el checkbox sobra ahí.
+  document.getElementById('lblDetalleProd').style.display = (m==='mes')?'flex':'none';
   document.getElementById('repOut').innerHTML='';
 }
 
@@ -1160,6 +1171,14 @@ function etiquetaConcepto(it){
   return it.concepto;
 }
 
+function _mesRango(mes){
+  const p=String(mes||'').split('-').map(Number);
+  const y=p[0], m=p[1];
+  if(!y||!m) return {desde:'', hasta:''};
+  const last=new Date(y,m,0).getDate();
+  return {desde:`${mes}-01`, hasta:`${mes}-${String(last).padStart(2,'0')}`};
+}
+
 async function generarReportePago(){
   const nombre=document.getElementById('repNombre').value;
   const mes=document.getElementById('repMesPago').value;
@@ -1167,29 +1186,77 @@ async function generarReportePago(){
                  saldoAnt:document.getElementById('incSaldoAnt').checked,
                  bonoProd:document.getElementById('incBonoProd').checked,
                  otro:true };
+  const incOtrosBonos=document.getElementById('incOtrosBonos').checked;
+  const incDetalleProd=document.getElementById('incDetalleProd').checked;
   const out=document.getElementById('repOut');
   if(!mes){ showToast('Selecciona el mes a pagar'); return; }
   if(!incMap.sueldo && !incMap.saldoAnt && !incMap.bonoProd){ showToast('Marca al menos un ítem en "Qué incluir"'); return; }
   const btn=document.getElementById('btnReporteUnif');
   btn.disabled=true; btn.textContent='⏳…';
   try{
-    const res=await fetch(`${SHEETS_URL}?action=pagos&mes=${mes}&nombre=${encodeURIComponent(nombre)}`);
-    const d=await res.json();
+    const fetches=[fetch(`${SHEETS_URL}?action=pagos&mes=${mes}&nombre=${encodeURIComponent(nombre)}`)];
+    if(incOtrosBonos) fetches.push(fetch(`${SHEETS_URL}?action=otrosbonos&mes=${mes}&nombre=${encodeURIComponent(nombre)}`));
+    const respuestas=await Promise.all(fetches);
+    const d=await respuestas[0].json();
     if(!d.ok) throw new Error(d.mensaje||'error');
-    // Filtra cada trabajador según el checklist y recalcula sus totales
-    const pagosFiltrados=(d.pagos||[]).map(p=>{
+    // Otros Bonos (opcional) — se mapean por nombre y se agregan como ítems más
+    let otrosPorNombre={};
+    if(incOtrosBonos && respuestas[1]){
+      const dO=await respuestas[1].json();
+      if(dO.ok){
+        (dO.bonos||[]).forEach(b=>{
+          (otrosPorNombre[b.nombre]=otrosPorNombre[b.nombre]||[]).push({
+            concepto: b.tipo||'Otro bono', monto: Number(b.monto)||0, estado:'Pendiente',
+            nota: [b.detalle, b.fecha?('reg. '+b.fecha):''].filter(Boolean).join(' · ')
+          });
+        });
+      }
+    }
+    // Trabajadores que solo aparecen en Otros Bonos (sin ítems en Pagos) también deben listarse
+    const nombresPago=new Set((d.pagos||[]).map(p=>p.nombre));
+    const extraTrabajadores=Object.keys(otrosPorNombre).filter(n=>!nombresPago.has(n)).map(n=>({nombre:n, items:[]}));
+    // Filtra cada trabajador según el checklist, agrega Otros Bonos y recalcula sus totales
+    const pagosFiltrados=[...(d.pagos||[]), ...extraTrabajadores].map(p=>{
       const items=p.items.filter(it=>incMap[categoriaConcepto(it.concepto)]);
+      if(incOtrosBonos && otrosPorNombre[p.nombre]) items.push(...otrosPorNombre[p.nombre]);
       const total=items.reduce((s,it)=>s+it.monto,0);
       const pagado=items.filter(it=>it.estado==='Pagado').reduce((s,it)=>s+it.monto,0);
       const pendiente=total-pagado;
-      return {nombre:p.nombre, items, total, pagado, pendiente};
+      return {nombre:p.nombre, items, total, pagado, pendiente, rangoProd:p.rangoProd||null};
     }).filter(p=>p.items.length);
+    // Detalle de producción día a día (opcional, solo para quienes tienen Bono Producción incluido)
+    let detallePorNombre={};
+    if(incDetalleProd){
+      const {desde:mDesde, hasta:mHasta}=_mesRango(mes);
+      const objetivos=pagosFiltrados.filter(p=>p.items.some(it=>categoriaConcepto(it.concepto)==='bonoProd'));
+      if(mDesde && objetivos.length){
+        const resultados=await Promise.all(objetivos.map(p=>
+          fetch(`${SHEETS_URL}?action=reporte&desde=${mDesde}&hasta=${mHasta}&nombre=${encodeURIComponent(p.nombre)}`).then(r=>r.json()).catch(()=>null)
+        ));
+        objetivos.forEach((p,i)=>{ if(resultados[i]&&resultados[i].ok) detallePorNombre[p.nombre]=resultados[i].registros||[]; });
+      }
+    }
     const t=pagosFiltrados.reduce((a,p)=>{a.total+=p.total;a.pagado+=p.pagado;a.pendiente+=p.pendiente;return a;},{total:0,pagado:0,pendiente:0});
     _ultimoPago={periodo:d.periodo, pagos:pagosFiltrados, totales:t, nombre};
     if(!pagosFiltrados.length){
       out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin pagos cargados para '+esc(mes)+'<br><span style="font-size:10px;color:var(--muted)">cárgalos en la hoja "Pagos" de la planilla</span></div></div>';
     } else {
-      const bloques=pagosFiltrados.map(p=>`
+      const bloques=pagosFiltrados.map(p=>{
+        const tieneBonoProd = p.items.some(it=>categoriaConcepto(it.concepto)==='bonoProd');
+        let extraHtml='';
+        if(incDetalleProd && detallePorNombre[p.nombre] && detallePorNombre[p.nombre].length){
+          const regs=detallePorNombre[p.nombre];
+          extraHtml=`<div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(53,56,73,.6)">
+            <div style="font-size:9px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;margin-bottom:3px">Detalle producción</div>
+            ${regs.map(r=>`<div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fm);padding:1px 0">
+              <span style="color:var(--fog)">${esc(r.fecha)} · ${esc(r.funcion)} · ${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</span>
+              <span style="color:var(--green)">$${(r.bono||0).toLocaleString('es-CL')}</span>
+            </div>`).join('')}
+          </div>`;
+        } else if(!incDetalleProd && p.rangoProd && tieneBonoProd){
+          extraHtml=`<div style="font-size:9px;color:var(--muted);font-family:var(--fm);margin-top:4px">📅 Bono Producción calculado sobre producción del ${esc(p.rangoProd.desde)} al ${esc(p.rangoProd.hasta)}</div>`;
+        }
+        return `
         <div style="background:var(--ink3);border-radius:6px;padding:10px 12px;margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
             <div style="font-weight:600;font-size:13px">${esc(p.nombre)}</div>
@@ -1206,11 +1273,13 @@ async function generarReportePago(){
               ${mostrarNota?`<div style="font-size:9px;color:var(--muted);padding-left:1px">${esc(it.nota)}${it.fechaPago?' · pagado '+esc(it.fechaPago):''}</div>`:''}
             </div>`;
           }).join('')}
+          ${extraHtml}
           <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fm);margin-top:5px;padding-top:5px;border-top:1px solid rgba(53,56,73,.6)">
             <span style="color:var(--green)">Pagado: $${p.pagado.toLocaleString('es-CL')}</span>
             <span style="color:${p.pendiente>0?'var(--amber)':'var(--muted)'}">Pendiente: $${p.pendiente.toLocaleString('es-CL')}</span>
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
       const parcial = !(incMap.sueldo&&incMap.saldoAnt&&incMap.bonoProd);
       out.innerHTML=`
         ${parcial?'<div style="font-size:9px;color:var(--amber);font-family:var(--fm);margin-bottom:8px">⚠️ Reporte parcial — no incluye todos los ítems, no representa el pago completo del mes.</div>':''}
@@ -1238,6 +1307,7 @@ function pagoWA(){
   (d.pagos||[]).forEach(p=>{
     msg+=`─────────────────────\n👷 *${p.nombre}*\n`;
     p.items.forEach(it=>{ msg+=`${it.estado==='Pagado'?'✓':'⏳'} ${etiquetaConcepto(it)}: $${it.monto.toLocaleString('es-CL')}\n`; });
+    if(p.rangoProd) msg+=`📅 Bono Producción: prod. del ${p.rangoProd.desde} al ${p.rangoProd.hasta}\n`;
     msg+=`*Total: $${p.total.toLocaleString('es-CL')}*`;
     if(p.pendiente>0) msg+=` · pendiente: $${p.pendiente.toLocaleString('es-CL')}`;
     msg+=`\n`;
@@ -1321,6 +1391,10 @@ function iniciar(){
   fetch(`${SHEETS_URL}?action=config`).then(r=>r.json()).then(d=>{
     if(d.ok && Array.isArray(d.workers) && d.workers.length){
       WORKERS = d.workers.map(w=>({ id:_slugNom(w.nom), nom:w.nom, tel:String(w.tel||'') }));
+    }
+    if(d.ok && d.tarifas){
+      stockMinCache = { bloque:d.tarifas.STOCK_MIN_BLOQUE||0, mosaico:d.tarifas.STOCK_MIN_MOSAICO||0, hilera:d.tarifas.STOCK_MIN_HILERA||0 };
+      renderModelos();
     }
     poblarRepNombre();
   }).catch(()=>poblarRepNombre());
