@@ -5,22 +5,24 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>Dashboard · Adoquines Modulares</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ink:#0d0e12;--ink2:#1c1e28;--ink3:#2a2d3e;
-  --brd:#353849;--muted:#6b7090;--fog:#a0a5c0;--paper:#f0f1f5;
-  --amber:#f59e0b;--amber2:#d97706;--green:#22c55e;
-  --red:#ef4444;--blue:#60a5fa;--violet:#a78bfa;--teal:#2dd4bf;
-  --r:8px;--fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'DM Mono',monospace;
+  /* Tema claro (27-ago-2026) — antes era tema oscuro (--ink:#0d0e12).
+     Mismas variables, valores nuevos: el resto del CSS no cambia. */
+  --ink:#f7f8fa;--ink2:#ffffff;--ink3:#eef0f4;
+  --brd:#dcdde2;--muted:#6b7090;--fog:#4b5165;--paper:#1a1c23;
+  --amber:#b45309;--amber2:#92400e;--green:#15803d;
+  --red:#b91c1c;--blue:#2563eb;--violet:#6d28d9;--teal:#0f766e;
+  --r:8px;--fd:'Inter',sans-serif;--fb:'Inter',sans-serif;--fm:'Inter',sans-serif;
 }
 html{-webkit-text-size-adjust:100%}
-body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14px;min-height:100dvh}
+body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:15px;font-variant-numeric:tabular-nums;min-height:100dvh}
 .topbar{background:var(--ink2);border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:56px;position:sticky;top:0;z-index:100}
 .brand{display:flex;align-items:center;gap:10px}
 .top-date{font-family:var(--fm);font-size:13px;color:var(--amber);font-weight:500;text-align:right}
-.top-day{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:right}
+.top-day{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;text-align:right}
 .nav-bar{background:var(--ink2);border-bottom:1px solid var(--brd);padding:0 16px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
 .nav-bar::-webkit-scrollbar{display:none}
 .nav-pill{padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;text-decoration:none;display:block}
@@ -28,7 +30,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .content{padding:14px;max-width:680px;margin:0 auto}
 .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:18px}
 .sec-title{font-family:var(--fd);font-size:14px;font-weight:700}
-.sec-count{font-family:var(--fm);font-size:11px;color:var(--muted);background:var(--ink3);padding:2px 8px;border-radius:4px}
+.sec-count{font-family:var(--fm);font-size:13px;color:var(--muted);background:var(--ink3);padding:2px 8px;border-radius:4px}
 
 /* STOCK CARDS */
 .mod-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
@@ -40,17 +42,17 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .mod-card.est-lleno::before{background:var(--blue)}
 .mod-nombre{font-family:var(--fd);font-size:12px;font-weight:700;margin-bottom:6px}
 .mod-stock-big{font-family:var(--fm);font-size:22px;font-weight:600;line-height:1}
-.mod-sub{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:4px;line-height:1.5}
+.mod-sub{font-size:12px;color:var(--muted);font-family:var(--fm);margin-top:4px;line-height:1.5}
 .mod-bar-track{height:4px;background:var(--ink3);border-radius:2px;margin-top:6px;overflow:hidden}
 .mod-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
 
 /* UPDATE BAR */
 .upd-bar{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:10px 14px;margin-bottom:10px}
 .upd-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.upd-label{font-size:11px;color:var(--muted);font-family:var(--fm)}
+.upd-label{font-size:13px;color:var(--muted);font-family:var(--fm)}
 .upd-val{font-size:12px;color:var(--fog);font-family:var(--fm);margin-top:2px}
 .upd-right{display:flex;align-items:center;gap:8px}
-.estado-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--fm);padding:3px 8px;border-radius:4px}
+.estado-badge{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-family:var(--fm);padding:3px 8px;border-radius:4px}
 .estado-badge.ok{background:rgba(34,197,94,.12);color:var(--green)}
 .estado-badge.warn{background:rgba(245,158,11,.12);color:var(--amber)}
 .estado-badge.err{background:rgba(239,68,68,.12);color:var(--red)}
@@ -60,15 +62,15 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .btn-refresh.loading svg{animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .upd-row2{border-top:1px solid var(--brd);padding-top:8px;display:flex;align-items:center;justify-content:space-between}
-.upd-prod-lbl{font-size:10px;color:var(--muted);font-family:var(--fm)}
+.upd-prod-lbl{font-size:12px;color:var(--muted);font-family:var(--fm)}
 .upd-prod-val{font-size:12px;font-weight:600;color:var(--amber);font-family:var(--fm);margin-top:2px}
-.upd-prod-rel{font-size:10px;color:var(--muted);font-family:var(--fm);text-align:right}
+.upd-prod-rel{font-size:12px;color:var(--muted);font-family:var(--fm);text-align:right}
 
 /* NOTAS */
 .aviso{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
 .aviso-icon{font-size:18px;flex-shrink:0}
 .aviso-txt{font-size:13px;color:var(--paper);line-height:1.5}
-.aviso-meta{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:3px}
+.aviso-meta{font-size:12px;color:var(--muted);font-family:var(--fm);margin-top:3px}
 .aviso.urgente{border-color:var(--red);background:rgba(239,68,68,.05)}
 .aviso.info{border-color:var(--blue);background:rgba(96,165,250,.05)}
 .aviso.logro{border-color:var(--green);background:rgba(34,197,94,.05)}
@@ -86,37 +88,37 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .kpi-card{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:12px;cursor:pointer;position:relative;transition:border-color .2s}
 .kpi-card:hover{border-color:var(--amber)}
 .kpi-chevron{position:absolute;top:10px;right:10px;color:var(--muted);font-size:14px}
-.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-family:var(--fm);margin-bottom:4px}
+.kpi-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-family:var(--fm);margin-bottom:4px}
 .kpi-val{font-family:var(--fd);font-size:24px;font-weight:800;line-height:1}
-.kpi-sub{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:3px}
+.kpi-sub{font-size:12px;color:var(--muted);font-family:var(--fm);margin-top:3px}
 
 /* AV BARS */
 .av-section{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:14px}
 .av-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.av-bar-lbl{font-size:11px;color:var(--muted);font-family:var(--fm);min-width:80px}
+.av-bar-lbl{font-size:13px;color:var(--muted);font-family:var(--fm);min-width:80px}
 .av-bar-track{flex:1;height:6px;background:var(--ink3);border-radius:3px;overflow:hidden}
 .av-bar-fill{height:100%;border-radius:3px}
-.av-bar-val{font-family:var(--fm);font-size:11px;color:var(--fog);min-width:28px;text-align:right}
+.av-bar-val{font-family:var(--fm);font-size:13px;color:var(--fog);min-width:28px;text-align:right}
 .roles-row{display:flex;gap:8px;margin-top:10px}
 .role-chip{flex:1;background:var(--ink3);border:1px solid var(--brd);border-radius:var(--r);padding:8px;text-align:center}
 .role-num{font-family:var(--fd);font-size:18px;font-weight:800}
-.role-lbl{font-size:9px;color:var(--muted);font-family:var(--fm);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+.role-lbl{font-size:11px;color:var(--muted);font-family:var(--fm);margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
 
 /* WORKER TABLE */
 .worker-table{width:100%;border-collapse:collapse}
-.worker-table th{font-size:10px;color:var(--muted);text-align:left;padding:6px 10px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--brd);font-family:var(--fm);font-weight:400}
-.worker-table td{padding:9px 10px;border-bottom:1px solid rgba(53,56,73,.5);font-size:13px;vertical-align:middle}
+.worker-table th{font-size:12px;color:var(--muted);text-align:left;padding:6px 10px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--brd);font-family:var(--fm);font-weight:400}
+.worker-table td{padding:9px 10px;border-bottom:1px solid var(--brd);font-size:13px;vertical-align:middle}
 .worker-table tr:last-child td{border-bottom:none}
 .worker-nom{font-weight:600}
-.worker-sub{font-size:11px;color:var(--muted);font-family:var(--fm);margin-top:1px}
-.badge{display:inline-block;font-size:10px;font-family:var(--fm);font-weight:500;padding:2px 7px;border-radius:4px}
+.worker-sub{font-size:13px;color:var(--muted);font-family:var(--fm);margin-top:1px}
+.badge{display:inline-block;font-size:12px;font-family:var(--fm);font-weight:500;padding:2px 7px;border-radius:4px}
 .b-fab{background:rgba(96,165,250,.15);color:var(--blue)}
 .b-trp{background:rgba(167,139,250,.15);color:var(--violet)}
 .b-pas{background:rgba(45,212,191,.15);color:var(--teal)}
 .bono-val{font-family:var(--fm);font-size:12px;font-weight:500;text-align:right}
 .bono-val.pos{color:var(--green)}
 .bono-val.zero{color:var(--muted)}
-.wa-btn{background:transparent;border:1px solid rgba(34,197,94,.3);color:var(--green);padding:4px 8px;border-radius:5px;font-size:11px;cursor:pointer;font-family:var(--fm)}
+.wa-btn{background:transparent;border:1px solid rgba(34,197,94,.3);color:var(--green);padding:4px 8px;border-radius:5px;font-size:13px;cursor:pointer;font-family:var(--fm)}
 .wa-btn:hover{background:rgba(34,197,94,.1)}
 .btn-anular{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:3px 6px;border-radius:4px}
 .btn-anular:hover{color:var(--red)}
@@ -126,10 +128,10 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .panel-wrap.open{display:block}
 .panel-back{display:flex;align-items:center;gap:8px;color:var(--amber);font-size:13px;cursor:pointer;margin-bottom:14px;font-family:var(--fm);background:none;border:none;padding:0}
 .panel-title{font-family:var(--fd);font-size:16px;font-weight:800;margin-bottom:12px}
-.detail-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid rgba(53,56,73,.5);gap:8px}
+.detail-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--brd);gap:8px}
 .detail-row:last-child{border-bottom:none}
 .detail-name{font-size:13px;color:var(--paper);flex:1}
-.detail-sub{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:2px}
+.detail-sub{font-size:12px;color:var(--muted);font-family:var(--fm);margin-top:2px}
 .detail-bar-wrap{flex:1.5;height:6px;background:var(--ink3);border-radius:3px;overflow:hidden}
 .detail-bar-fill{height:100%;border-radius:3px;background:var(--blue)}
 .detail-val{font-family:var(--fm);font-size:13px;font-weight:600;min-width:50px;text-align:right}
@@ -141,16 +143,16 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .cal-wrap{background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:12px;margin-top:14px}
 .cal-title{font-size:12px;font-weight:600;color:var(--paper);margin-bottom:8px}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.cal-hdr{font-size:9px;color:var(--muted);text-align:center;padding:3px 0;font-family:var(--fm)}
+.cal-hdr{font-size:11px;color:var(--muted);text-align:center;padding:3px 0;font-family:var(--fm)}
 .cal-cell{border-radius:4px;padding:3px 2px;text-align:center;min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-.cal-num{font-size:9px;color:var(--muted);font-family:var(--fm)}
+.cal-num{font-size:11px;color:var(--muted);font-family:var(--fm)}
 .cal-badge{margin-top:2px;font-size:7px;padding:1px 3px;border-radius:3px;font-family:var(--fm);font-weight:600;line-height:1.3}
 .cal-trp{background:rgba(167,139,250,.2);color:var(--violet)}
 .cal-ay{background:rgba(245,158,11,.2);color:var(--amber)}
 .cal-exc{background:rgba(96,165,250,.2);color:var(--blue)}
 .cal-off{opacity:.3}
 .cal-legend{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
-.cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);font-family:var(--fm)}
+.cal-leg-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);font-family:var(--fm)}
 .cal-leg-dot{width:8px;height:8px;border-radius:2px}
 .btn-cal-add{margin-top:8px;width:100%;background:transparent;border:1px dashed var(--brd);color:var(--muted);padding:7px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--fb)}
 .btn-cal-add:hover{border-color:var(--amber);color:var(--amber)}
@@ -164,6 +166,22 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
 .month-sel-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .month-sel-row input{background:var(--ink2);border:1px solid var(--brd);border-radius:6px;color:var(--fog);padding:4px 8px;font-size:12px;font-family:var(--fm);cursor:pointer}
 .divider{height:1px;background:var(--brd);margin:14px 0}
+
+/* ═══ ADAPTADO A PANTALLA GRANDE (27-ago-2026) ═══
+   Hasta 899px: igual que siempre (celular/tablet chico, sin cambios).
+   Desde 900px: el contenido deja de estar limitado a 680px y usa el
+   ancho real de la pantalla; las tarjetas KPI pasan de 2 a 4 columnas. */
+@media (min-width:900px){
+  .content{max-width:1240px;padding:24px 32px}
+  .kpi-grid{grid-template-columns:repeat(4,1fr)}
+  .mod-stock-big{font-size:26px}
+  .kpi-val{font-size:28px}
+  .worker-table td{font-size:14px;padding:11px 12px}
+  .worker-table th{padding:8px 12px}
+}
+@media (min-width:900px) and (max-width:1099px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
@@ -194,7 +212,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <!-- 1. STOCK TIEMPO REAL -->
   <div class="sec-head" style="margin-top:4px">
     <div class="sec-title">📦 Stock tiempo real</div>
-    <span style="font-size:10px;color:var(--muted);font-family:var(--fm)">Prod · Desp · Disp</span>
+    <span style="font-size:12px;color:var(--muted);font-family:var(--fm)">Prod · Desp · Disp</span>
   </div>
   <div class="mod-grid" id="modGrid"></div>
 
@@ -228,7 +246,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <!-- 3. NOTAS IMPORTANTES — colapsable -->
   <div class="sec-head" style="margin-top:4px">
     <div class="sec-title">📌 Notas</div>
-    <button onclick="toggleNotas()" id="btnNotas" style="background:transparent;border:1px solid var(--brd);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--fm)">▼ Ver / agregar</button>
+    <button onclick="toggleNotas()" id="btnNotas" style="background:transparent;border:1px solid var(--brd);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:13px;cursor:pointer;font-family:var(--fm)">▼ Ver / agregar</button>
   </div>
   <div id="notasPanel" style="display:none">
     <div class="aviso-form">
@@ -255,10 +273,10 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
     <div class="month-sel-row">
       <input type="month" id="inpMes" onchange="onMesChange()">
       <input type="date" id="inpFecha" title="Filtrar por día" onchange="onDiaChange()">
-      <button id="btnLimpiarFiltro" onclick="limpiarFiltro()" style="display:none;background:transparent;border:1px solid var(--brd);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--fm)">✕ Ver mes</button>
+      <button id="btnLimpiarFiltro" onclick="limpiarFiltro()" style="display:none;background:transparent;border:1px solid var(--brd);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:13px;cursor:pointer;font-family:var(--fm)">✕ Ver mes</button>
     </div>
   </div>
-  <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Toca una tarjeta para ver el detalle →</div>
+  <div style="font-size:12px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Toca una tarjeta para ver el detalle →</div>
   <div class="kpi-grid">
     <div class="kpi-card" onclick="abrirPanel('fabricados')">
       <span class="kpi-chevron">›</span>
@@ -313,7 +331,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <div style="background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:6px" id="tenWrap">
     <div class="empty" style="padding:10px;background:none;border:none"><div style="font-size:12px">Cargando tendencias…</div></div>
   </div>
-  <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-bottom:14px">Unidades = fabricantes + pasto · $/und = bono total de la semana ÷ unidades</div>
+  <div style="font-size:12px;color:var(--muted);font-family:var(--fm);margin-bottom:14px">Unidades = fabricantes + pasto · $/und = bono total de la semana ÷ unidades</div>
 
   <!-- 7. REPORTE POR COLABORADOR (Bloque 9) -->
   <div class="sec-head" style="margin-top:18px">
@@ -322,41 +340,41 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   </div>
   <div style="background:var(--ink2);border:1px solid var(--brd);border-radius:var(--r);padding:14px;margin-bottom:20px">
     <div style="margin-bottom:10px">
-      <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Colaborador</div>
+      <div style="font-family:var(--fm);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Colaborador</div>
       <select id="repNombre" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:8px"><option value="">Todos</option></select>
     </div>
 
     <div style="display:flex;gap:6px;margin-bottom:10px">
-      <button type="button" id="repModoMes" onclick="setRepModo('mes')" style="flex:1;background:var(--amber);border:none;border-radius:6px;color:#000;font-weight:700;font-size:11px;padding:8px;cursor:pointer">📅 Mes cerrado</button>
-      <button type="button" id="repModoPeriodo" onclick="setRepModo('periodo')" style="flex:1;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--muted);font-weight:700;font-size:11px;padding:8px;cursor:pointer">🗓️ Período personalizado</button>
+      <button type="button" id="repModoMes" onclick="setRepModo('mes')" style="flex:1;background:var(--amber);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:8px;cursor:pointer">📅 Mes cerrado</button>
+      <button type="button" id="repModoPeriodo" onclick="setRepModo('periodo')" style="flex:1;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--muted);font-weight:700;font-size:13px;padding:8px;cursor:pointer">🗓️ Período personalizado</button>
     </div>
 
     <div id="repMesBox">
-      <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Mes</div>
+      <div style="font-family:var(--fm);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Mes</div>
       <input type="month" id="repMesPago" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark;margin-bottom:10px">
     </div>
     <div id="repPeriodoBox" style="display:none">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div>
-          <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Desde</div>
+          <div style="font-family:var(--fm);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Desde</div>
           <input type="date" id="repDesde" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
         </div>
         <div>
-          <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Hasta</div>
+          <div style="font-family:var(--fm);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px">Hasta</div>
           <input type="date" id="repHasta" style="width:100%;background:var(--ink3);border:1px solid var(--brd);border-radius:6px;color:var(--paper);font-size:13px;padding:7px;color-scheme:dark">
         </div>
       </div>
     </div>
 
-    <div style="font-family:var(--fm);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Qué incluir</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:6px;font-size:11px;color:var(--fog);font-family:var(--fm)">
+    <div style="font-family:var(--fm);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Qué incluir</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:6px;font-size:13px;color:var(--fog);font-family:var(--fm)">
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incSueldo" checked style="accent-color:var(--amber)"> Sueldo Base</label>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incSaldoAnt" checked style="accent-color:var(--amber)"> Saldo Mes Anterior</label>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incBonoProd" checked style="accent-color:var(--amber)"> Bono Producción</label>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incOtrosBonos" style="accent-color:var(--amber)"> Otros Bonos</label>
       <label id="lblDetalleProd" style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="incDetalleProd" style="accent-color:var(--amber)"> Detalle de producción</label>
     </div>
-    <div id="repPeriodoAviso" style="display:none;font-size:9px;color:var(--muted);font-family:var(--fm);margin:2px 0 10px">ℹ️ En período personalizado solo se calcula Bono Producción (exacto, desde los tickets). Sueldo Base y Saldo Mes Anterior son montos mensuales cerrados y no aplican aquí.</div>
+    <div id="repPeriodoAviso" style="display:none;font-size:11px;color:var(--muted);font-family:var(--fm);margin:2px 0 10px">ℹ️ En período personalizado solo se calcula Bono Producción (exacto, desde los tickets). Sueldo Base y Saldo Mes Anterior son montos mensuales cerrados y no aplican aquí.</div>
 
     <button onclick="generarReporteUnificado()" id="btnReporteUnif" style="width:100%;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:6px;color:#000;font-weight:700;font-size:13px;padding:10px;cursor:pointer;margin-top:4px">📊 Generar Reporte</button>
     <div id="repOut" style="margin-top:12px"></div>
@@ -371,10 +389,10 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <button class="panel-back" onclick="cerrarPanel()">← Volver al Dashboard</button>
   <div class="panel-title">Fabricados — <span id="pfMes">—</span></div>
   <div class="info-box" id="pfInfo">Cargando...</div>
-  <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Ranking por fabricante</div>
+  <div style="font-size:13px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Ranking por fabricante</div>
   <div id="pfBars"></div>
   <div class="divider"></div>
-  <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Registros individuales — toca 🗑 para anular</div>
+  <div style="font-size:13px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Registros individuales — toca 🗑 para anular</div>
   <div id="pfRows"></div>
 </div>
 
@@ -383,9 +401,9 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <button class="panel-back" onclick="cerrarPanel()">← Volver al Dashboard</button>
   <div class="panel-title">Despachados — <span id="pdMes">—</span></div>
   <div class="info-box" id="pdInfo">Cargando...</div>
-  <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Historial de despachos — toca 🗑 para anular</div>
+  <div style="font-size:13px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Historial de despachos — toca 🗑 para anular</div>
   <div id="pdRows"></div>
-  <div style="margin-top:14px;padding:10px;background:var(--ink3);border-radius:var(--r);font-size:11px;color:var(--muted);font-family:var(--fm)">
+  <div style="margin-top:14px;padding:10px;background:var(--ink3);border-radius:var(--r);font-size:13px;color:var(--muted);font-family:var(--fm)">
     💡 Para registrar un nuevo despacho usa el botón en pantalla de Tickets
   </div>
 </div>
@@ -395,10 +413,10 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <button class="panel-back" onclick="cerrarPanel()">← Volver al Dashboard</button>
   <div class="panel-title">AV adicionales — <span id="pavMes">—</span></div>
   <div class="info-box" id="pavInfo">Cargando...</div>
-  <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Adicionales por fabricante (und. sobre base 30)</div>
+  <div style="font-size:13px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Adicionales por fabricante (und. sobre base 30)</div>
   <div id="pavRows"></div>
   <div class="divider"></div>
-  <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-bottom:6px">Base de cálculo para trompero y ayudante</div>
+  <div style="font-size:13px;color:var(--muted);font-family:var(--fm);margin-bottom:6px">Base de cálculo para trompero y ayudante</div>
   <div style="background:var(--ink3);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--fog);font-family:var(--fm)">AV total = suma de adicionales fabricantes · Trompero = AV × tarifa · Ayudante = días × tarifa</div>
 </div>
 
@@ -407,12 +425,12 @@ body{background:var(--ink);color:var(--paper);font-family:var(--fb);font-size:14
   <button class="panel-back" onclick="cerrarPanel()">← Volver al Dashboard</button>
   <div class="panel-title">Bonos y trompero — <span id="pbMes">—</span></div>
   <div class="info-box" id="pbInfo">Cargando...</div>
-  <div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Detalle por trabajador</div>
+  <div style="font-size:13px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Detalle por trabajador</div>
   <div id="pbRows"></div>
   <!-- CALENDARIO TROMPO -->
   <div class="cal-wrap">
     <div class="cal-title">Calendario trompo — <span id="calMes">—</span></div>
-    <div style="font-size:10px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Fuente: Asistencia Personal · se actualiza al abrir</div>
+    <div style="font-size:12px;color:var(--muted);font-family:var(--fm);margin-bottom:8px">Fuente: Asistencia Personal · se actualiza al abrir</div>
     <div class="cal-grid" id="calGrid"><div style="grid-column:1/-1;text-align:center;padding:20px;font-size:12px;color:var(--muted)">Cargando calendario...</div></div>
     <div class="cal-legend">
       <div class="cal-leg-item"><div class="cal-leg-dot" style="background:rgba(167,139,250,.4)"></div>Trompero</div>
@@ -441,7 +459,7 @@ const ADMIN_PIN = '245686';
     if (p === ADMIN_PIN) { sessionStorage.setItem('fp_admin_ok','1'); return; }
     if (p === null) break; // canceló
   }
-  document.documentElement.innerHTML = '<body style="background:#0d0e12;color:#a0a5c0;font-family:sans-serif;display:grid;place-items:center;height:100vh"><div style="text-align:center"><div style="font-size:40px">🔒</div><p>Acceso denegado</p></div></body>';
+  document.documentElement.innerHTML = '<body style="background:#f7f8fa;color:#4b5165;font-family:sans-serif;display:grid;place-items:center;height:100vh"><div style="text-align:center"><div style="font-size:40px">🔒</div><p>Acceso denegado</p></div></body>';
   throw new Error('PIN incorrecto');
 })();
 
@@ -544,8 +562,8 @@ function renderAvisosResumen(){
   if(!av.length){ el.innerHTML=''; return; }
   const urgentes=av.filter(a=>a.tipo==='urgente').length;
   el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleNotas()">
-    ${urgentes?`<span style="background:rgba(239,68,68,.15);color:var(--red);border-radius:4px;font-size:11px;padding:2px 8px;font-family:var(--fm)">🚨 ${urgentes} urgente${urgentes!==1?'s':''}</span>`:''}
-    <span style="font-size:11px;color:var(--muted);font-family:var(--fm)">${av.length} nota${av.length!==1?'s':''} · toca para ver ▼</span>
+    ${urgentes?`<span style="background:rgba(239,68,68,.15);color:var(--red);border-radius:4px;font-size:13px;padding:2px 8px;font-family:var(--fm)">🚨 ${urgentes} urgente${urgentes!==1?'s':''}</span>`:''}
+    <span style="font-size:13px;color:var(--muted);font-family:var(--fm)">${av.length} nota${av.length!==1?'s':''} · toca para ver ▼</span>
   </div>`;
 }
 
@@ -635,10 +653,10 @@ function renderResumen(data, esDia){
   document.getElementById('cardBonoSub').textContent = '+ trompero →';
 
   // Último día producción registrado
-  const fechas = regs.filter(r=>r.fecha).map(r=>r.fecha).sort((a,b)=>fechaSort(a).localeCompare(fechaSort(b)));
+  const fechas = regs.filter(r=>r.fecha).map(r=>r.fecha).sort((a,b)=>fechaSort(a,y).localeCompare(fechaSort(b,y)));
   if(fechas.length){
     const ult = fechas[fechas.length-1];
-    const dUlt = parseFecha(ult);
+    const dUlt = parseFecha(ult,y);
     const hoy  = new Date();
     const diffDias = Math.round((hoy-dUlt)/86400000);
     const prodUlt = regs.filter(r=>r.fecha===ult&&(r.rol==='fab'||r.rol==='pas')).reduce((s,r)=>s+r.cant,0);
@@ -690,7 +708,7 @@ function renderResumen(data, esDia){
     const bono=(r.bonoProd||0)+(r.bonoT||0);
     const cantTxt=r.rol==='trp'?`AV:${data.av_total||0}`:r.rol==='trp_a'?`${r.cant} día${r.cant!==1?'s':''}`:`${(r.cant||0).toLocaleString('es-CL')} und.`;
     const bonoFmt=bono>0?`<span class="bono-val pos">$${bono.toLocaleString('es-CL')}</span>`:`<span class="bono-val zero">$0</span>`;
-    const sub=(!esDia&&r.fecha)?`${formatFechaCorta(r.fecha)} · ${r.modelo||'—'}`:(r.modelo||'—');
+    const sub=(!esDia&&r.fecha)?`${formatFechaCorta(r.fecha,y)} · ${r.modelo||'—'}`:(r.modelo||'—');
     const tktSafe=(r.tktId||'').replace(/'/g,"\\'");
     const nomSafe=nom.replace(/'/g,"\\'");
     const widSafe=(r.wid||'').replace(/'/g,"\\'");
@@ -787,7 +805,7 @@ function renderModelos(){
       <div class="mod-nombre">${m.emoji} ${m.nombre}</div>
       <div class="mod-stock-big" style="color:${col}">${stock.toLocaleString('es-CL')}</div>
       <div class="mod-sub">Prod: ${prod.toLocaleString('es-CL')}<br>Desp: ${sal.toLocaleString('es-CL')}</div>
-      ${bajo?`<div style="font-size:9px;color:var(--red);font-family:var(--fm);margin-top:3px">⚠ bajo mínimo (${minimo.toLocaleString('es-CL')})</div>`:''}
+      ${bajo?`<div style="font-size:11px;color:var(--red);font-family:var(--fm);margin-top:3px">⚠ bajo mínimo (${minimo.toLocaleString('es-CL')})</div>`:''}
       <div class="mod-bar-track"><div class="mod-bar-fill" style="width:${pct}%;background:${col}"></div></div>
     </div>`;
   }).join('');
@@ -984,7 +1002,7 @@ function renderCalendarioTrompo(dias,year,monthIdx,errorMsg){
     }).join('');
     html+=`<div class="cal-cell"><div class="cal-num">${d}</div>${badges}</div>`;
   }
-  if(errorMsg) html+=`<div style="grid-column:1/-1;font-size:10px;color:var(--muted);font-family:var(--fm);padding:8px 0;text-align:center">⚠️ ${esc(errorMsg)}</div>`;
+  if(errorMsg) html+=`<div style="grid-column:1/-1;font-size:12px;color:var(--muted);font-family:var(--fm);padding:8px 0;text-align:center">⚠️ ${esc(errorMsg)}</div>`;
   document.getElementById('calGrid').innerHTML=html;
 
   // Resumen debajo del calendario
@@ -997,17 +1015,17 @@ function renderCalendarioTrompo(dias,year,monthIdx,errorMsg){
   const resumenHTML=Object.values(resumenMap).map(w=>{
     const cargo=(w.cargo||'').toLowerCase();
     const cls=cargo.includes('ayudante')?'cal-ay':'cal-trp';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(53,56,73,.4)">
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--brd)">
       <div style="display:flex;align-items:center;gap:8px">
-        <div class="cal-badge ${cls}" style="font-size:9px">${(w.nombre||'').split(' ')[0]}</div>
+        <div class="cal-badge ${cls}" style="font-size:11px">${(w.nombre||'').split(' ')[0]}</div>
         <div>
           <div style="font-size:12px;font-weight:600;color:var(--paper)">${esc(w.nombre||'')}</div>
-          <div style="font-size:10px;color:var(--muted);font-family:var(--fm)">${esc(w.cargo||'')}</div>
+          <div style="font-size:12px;color:var(--muted);font-family:var(--fm)">${esc(w.cargo||'')}</div>
         </div>
       </div>
       <div style="text-align:right">
         <div style="font-family:var(--fm);font-size:13px;font-weight:600;color:var(--amber)">${w.dias} días</div>
-        <div style="font-size:10px;color:var(--muted);font-family:var(--fm)">trabajados</div>
+        <div style="font-size:12px;color:var(--muted);font-family:var(--fm)">trabajados</div>
       </div>
     </div>`;
   }).join('');
@@ -1054,13 +1072,13 @@ async function cargarTendencias(){
     wrap.innerHTML=sem.map(s=>{
       const pct=Math.round(s.unidades/maxU*100);
       return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
-        <div style="font-family:var(--fm);font-size:10px;color:var(--muted);width:44px;flex-shrink:0">${s.ini}</div>
+        <div style="font-family:var(--fm);font-size:12px;color:var(--muted);width:44px;flex-shrink:0">${s.ini}</div>
         <div style="flex:1;height:14px;background:var(--ink3);border-radius:4px;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--amber),#d97706);border-radius:4px"></div>
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--amber),var(--amber2));border-radius:4px"></div>
         </div>
-        <div style="font-family:var(--fm);font-size:11px;color:var(--paper);width:56px;text-align:right;flex-shrink:0">${s.unidades.toLocaleString('es-CL')}</div>
-        <div style="font-family:var(--fm);font-size:10px;color:var(--green);width:88px;text-align:right;flex-shrink:0">$${s.bono.toLocaleString('es-CL')}</div>
-        <div style="font-family:var(--fm);font-size:10px;color:${s.cpu>0?'var(--blue)':'var(--muted)'};width:56px;text-align:right;flex-shrink:0">${s.cpu>0?'$'+s.cpu+'/u':'—'}</div>
+        <div style="font-family:var(--fm);font-size:13px;color:var(--paper);width:56px;text-align:right;flex-shrink:0">${s.unidades.toLocaleString('es-CL')}</div>
+        <div style="font-family:var(--fm);font-size:12px;color:var(--green);width:88px;text-align:right;flex-shrink:0">$${s.bono.toLocaleString('es-CL')}</div>
+        <div style="font-family:var(--fm);font-size:12px;color:${s.cpu>0?'var(--blue)':'var(--muted)'};width:56px;text-align:right;flex-shrink:0">${s.cpu>0?'$'+s.cpu+'/u':'—'}</div>
       </div>`;
     }).join('');
     // Variación última semana completa vs anterior
@@ -1106,9 +1124,9 @@ async function generarReporte(){
       out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin registros en ese rango</div></div>';
     } else {
       const t=d.totales||{};
-      const filas=regs.map(r=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(53,56,73,.4);font-size:12px">
+      const filas=regs.map(r=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 4px;border-bottom:1px solid var(--brd);font-size:12px">
         <div><div>${esc(r.fecha)}${nombre?'':' · <strong>'+esc(r.nombre)+'</strong>'}</div>
-        <div style="font-size:10px;color:var(--muted);font-family:var(--fm)">${esc(r.funcion)} · ${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</div></div>
+        <div style="font-size:12px;color:var(--muted);font-family:var(--fm)">${esc(r.funcion)} · ${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</div></div>
         <div style="font-family:var(--fm);color:var(--green);font-weight:600">$${(r.bono||0).toLocaleString('es-CL')}</div>
       </div>`).join('');
       out.innerHTML=`
@@ -1239,22 +1257,22 @@ async function generarReportePago(){
     const t=pagosFiltrados.reduce((a,p)=>{a.total+=p.total;a.pagado+=p.pagado;a.pendiente+=p.pendiente;return a;},{total:0,pagado:0,pendiente:0});
     _ultimoPago={periodo:d.periodo, pagos:pagosFiltrados, totales:t, nombre};
     if(!pagosFiltrados.length){
-      out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin pagos cargados para '+esc(mes)+'<br><span style="font-size:10px;color:var(--muted)">cárgalos en la hoja "Pagos" de la planilla</span></div></div>';
+      out.innerHTML='<div class="empty" style="padding:14px"><div style="font-size:12px">Sin pagos cargados para '+esc(mes)+'<br><span style="font-size:12px;color:var(--muted)">cárgalos en la hoja "Pagos" de la planilla</span></div></div>';
     } else {
       const bloques=pagosFiltrados.map(p=>{
         const tieneBonoProd = p.items.some(it=>categoriaConcepto(it.concepto)==='bonoProd');
         let extraHtml='';
         if(incDetalleProd && detallePorNombre[p.nombre] && detallePorNombre[p.nombre].length){
           const regs=detallePorNombre[p.nombre];
-          extraHtml=`<div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(53,56,73,.6)">
-            <div style="font-size:9px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;margin-bottom:3px">Detalle producción</div>
-            ${regs.map(r=>`<div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fm);padding:1px 0">
+          extraHtml=`<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--brd)">
+            <div style="font-size:11px;color:var(--muted);font-family:var(--fm);text-transform:uppercase;margin-bottom:3px">Detalle producción</div>
+            ${regs.map(r=>`<div style="display:flex;justify-content:space-between;font-size:12px;font-family:var(--fm);padding:1px 0">
               <span style="color:var(--fog)">${esc(r.fecha)} · ${esc(r.funcion)} · ${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</span>
               <span style="color:var(--green)">$${(r.bono||0).toLocaleString('es-CL')}</span>
             </div>`).join('')}
           </div>`;
         } else if(!incDetalleProd && p.rangoProd && tieneBonoProd){
-          extraHtml=`<div style="font-size:9px;color:var(--muted);font-family:var(--fm);margin-top:4px">📅 Bono Producción calculado sobre producción del ${esc(p.rangoProd.desde)} al ${esc(p.rangoProd.hasta)}</div>`;
+          extraHtml=`<div style="font-size:11px;color:var(--muted);font-family:var(--fm);margin-top:4px">📅 Bono Producción calculado sobre producción del ${esc(p.rangoProd.desde)} al ${esc(p.rangoProd.hasta)}</div>`;
         }
         return `
         <div style="background:var(--ink3);border-radius:6px;padding:10px 12px;margin-bottom:8px">
@@ -1266,15 +1284,15 @@ async function generarReportePago(){
             const esDiasTrabajados = it.concepto==='Sueldo Base (prorrateado)' && it.nota && /d[ií]as trabajados/i.test(it.nota);
             const mostrarNota = it.nota && !esDiasTrabajados;
             return `<div style="padding:2px 0;font-family:var(--fm)">
-              <div style="display:flex;justify-content:space-between;font-size:11px">
+              <div style="display:flex;justify-content:space-between;font-size:13px">
                 <span style="color:var(--fog)">${it.estado==='Pagado'?'✓':'⏳'} ${esc(etiquetaConcepto(it))}</span>
                 <span style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">$${it.monto.toLocaleString('es-CL')}</span>
               </div>
-              ${mostrarNota?`<div style="font-size:9px;color:var(--muted);padding-left:1px">${esc(it.nota)}${it.fechaPago?' · pagado '+esc(it.fechaPago):''}</div>`:''}
+              ${mostrarNota?`<div style="font-size:11px;color:var(--muted);padding-left:1px">${esc(it.nota)}${it.fechaPago?' · pagado '+esc(it.fechaPago):''}</div>`:''}
             </div>`;
           }).join('')}
           ${extraHtml}
-          <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fm);margin-top:5px;padding-top:5px;border-top:1px solid rgba(53,56,73,.6)">
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-family:var(--fm);margin-top:5px;padding-top:5px;border-top:1px solid var(--brd)">
             <span style="color:var(--green)">Pagado: $${p.pagado.toLocaleString('es-CL')}</span>
             <span style="color:${p.pendiente>0?'var(--amber)':'var(--muted)'}">Pendiente: $${p.pendiente.toLocaleString('es-CL')}</span>
           </div>
@@ -1282,7 +1300,7 @@ async function generarReportePago(){
       }).join('');
       const parcial = !(incMap.sueldo&&incMap.saldoAnt&&incMap.bonoProd);
       out.innerHTML=`
-        ${parcial?'<div style="font-size:9px;color:var(--amber);font-family:var(--fm);margin-bottom:8px">⚠️ Reporte parcial — no incluye todos los ítems, no representa el pago completo del mes.</div>':''}
+        ${parcial?'<div style="font-size:11px;color:var(--amber);font-family:var(--fm);margin-bottom:8px">⚠️ Reporte parcial — no incluye todos los ítems, no representa el pago completo del mes.</div>':''}
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
           <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:var(--amber)">$${(t.total||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Total ${esc(mes)}</div></div>
           <div style="background:var(--ink3);border-radius:6px;padding:8px;text-align:center"><div style="font-family:var(--fd);font-size:16px;font-weight:800;color:var(--green)">$${(t.pagado||0).toLocaleString('es-CL')}</div><div style="font-size:8px;color:var(--muted);font-family:var(--fm);text-transform:uppercase">Pagado</div></div>
@@ -1344,7 +1362,7 @@ function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repla
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.opacity='1'; clearTimeout(t._to); t._to=setTimeout(()=>t.style.opacity='0',3500); }
 
 // Parsea D/M/YYYY, DD/MM/YYYY, DD-MM-YYYY o YYYY-MM-DD → Date
-function parseFecha(str){
+function parseFecha(str,anioCtx){
   if(!str) return null;
   if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return new Date(str+'T12:00:00');
   if(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(str)){
@@ -1352,10 +1370,17 @@ function parseFecha(str){
     const [d,m,y]=str.split(sep);
     return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T12:00:00`);
   }
+  // "D/M" sin año — formato que manda action=mes/action=resumen (_buildResumen).
+  // Sin esto, new Date("7/8") lo interpreta como 7-ago-2001 (bug real, no dato corrupto).
+  if(/^\d{1,2}\/\d{1,2}$/.test(str)){
+    const [d,m]=str.split('/');
+    const y=anioCtx||new Date().getFullYear();
+    return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T12:00:00`);
+  }
   return new Date(str);
 }
 // Convierte fecha a YYYY-MM-DD para ordenar correctamente
-function fechaSort(str){
+function fechaSort(str,anioCtx){
   if(!str) return '';
   if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
   if(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(str)){
@@ -1363,11 +1388,16 @@ function fechaSort(str){
     const [d,m,y]=str.split(sep);
     return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
   }
+  if(/^\d{1,2}\/\d{1,2}$/.test(str)){
+    const [d,m]=str.split('/');
+    const y=anioCtx||new Date().getFullYear();
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
   return str;
 }
 // Formatea fecha para mostrar en UI: "lun 8 jul"
-function formatFechaCorta(str){
-  const d=parseFecha(str);
+function formatFechaCorta(str,anioCtx){
+  const d=parseFecha(str,anioCtx);
   if(!d||isNaN(d)) return str||'—';
   return d.toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'});
 }
