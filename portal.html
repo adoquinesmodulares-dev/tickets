@@ -45,10 +45,10 @@ select option{background:#1c1e28}
 .kval{font-family:var(--fd);font-size:26px;font-weight:800;margin-top:4px}
 .ksub{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:3px}
 .amber{color:var(--amber)}.green{color:var(--green)}.blue{color:var(--blue)}.teal{color:var(--teal)}.violet{color:var(--violet)}
-.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(53,56,73,.5);font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(53,56,73,.5);font-size:15px}
 .row:last-child{border-bottom:none}
-.row .sub{font-size:10px;color:var(--muted);font-family:var(--fm);margin-top:2px}
-.row .n{font-family:var(--fm);font-weight:600}
+.row .sub{font-size:14px;font-weight:600;color:var(--paper);opacity:.75;font-family:var(--fm);margin-top:3px}
+.row .n{font-family:var(--fm);font-weight:600;font-size:15px}
 .badge{display:inline-block;font-family:var(--fm);font-size:9px;font-weight:500;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.4px}
 .b-pend{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
 .b-apr{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
@@ -120,6 +120,7 @@ select option{background:#1c1e28}
 
   <!-- VISTA RESUMEN -->
   <div class="view act" id="view-resumen">
+    <div class="ibox warn" id="incidenciasBox" style="display:none;margin-bottom:10px"></div>
     <div class="kgrid">
       <div class="kcard"><div class="klbl">Hoy · Unidades</div><div class="kval blue" id="kHoyU">—</div><div class="ksub" id="kHoySub">—</div></div>
       <div class="kcard"><div class="klbl">Hoy · Bono est.</div><div class="kval green" id="kHoyB">—</div><div class="ksub">estimado del día</div></div>
@@ -157,7 +158,7 @@ select option{background:#1c1e28}
     <div class="kcard full" style="text-align:center;padding:20px;margin-bottom:12px">
       <div class="klbl">Días de vacaciones disponibles</div>
       <div class="saldo-big" id="kSaldo">—</div>
-      <div class="ksub" id="kSaldoSub">días hábiles (lunes a viernes)</div>
+      <div class="kub" id="kSaldoSub">días hábiles (lunes a viernes)</div>
     </div>
     <div class="panel"><div class="ph"><span>🏖️</span><span class="ph-t">Solicitar vacaciones</span></div>
       <div class="pb">
@@ -187,7 +188,7 @@ select option{background:#1c1e28}
 <div class="tabs" id="tabs" style="display:none">
   <div class="tab act" id="tab-resumen" onclick="verTab('resumen')"><span class="ti">📊</span>Resumen</div>
   <div class="tab" id="tab-pago" onclick="verTab('pago')"><span class="ti">💵</span>Mi Pago</div>
-  <div class="tab" id="tab-vacas" onclick="verTab('vacas')"><span class="ti">🏖️</span>Vacaciones</div>
+  <div class="tab" id="tab-vacas" onclick="verTab('vacas')"><span class="ti">🖖️</span>Vacaciones</div>
   <div class="tab" id="tab-avisos" onclick="verTab('avisos')"><span class="ti">📢</span>Avisos</div>
 </div>
 
@@ -312,6 +313,25 @@ function render(){
   document.getElementById('kMesDias').textContent=(mesP.dias||0)+' día'+(mesP.dias!==1?'s':'')+' registrados';
   document.getElementById('kMesB').textContent=fmt$(mesP.bono);
 
+  // Faltas / vacaciones tomadas / licencia del mes (hoja "Asistencia_Mensual",
+  // carga manual de Ignacio con el archivo de GeoVictoria). Si no hay fila
+  // cargada para este trabajador este mes, el backend devuelve todo en 0 y
+  // sin nota — en ese caso no mostramos la caja (no es que tenga 0 faltas,
+  // es que aún no se cargó el dato).
+  const inc=d.incidencias||{};
+  const incBox=document.getElementById('incidenciasBox');
+  const hayIncidencias=(inc.faltas||0)>0 || (inc.vacacionesMes||0)>0 || (inc.licencia||0)>0 || inc.nota;
+  if(hayIncidencias){
+    const partes=[];
+    if(inc.faltas>0) partes.push(`<strong>${inc.faltas} falta${inc.faltas!==1?'s':''}</strong>`);
+    if(inc.vacacionesMes>0) partes.push(`${inc.vacacionesMes} día${inc.vacacionesMes!==1?'s':''} de vacaciones`);
+    if(inc.licencia>0) partes.push(`${inc.licencia} día${inc.licencia!==1?'s':''} de licencia`);
+    incBox.innerHTML=`<span>📋</span><div>${partes.join(' · ')} este mes.${inc.nota?' '+esc(inc.nota):''}<br><span style="opacity:.75">¿No corresponde? Avísale a Ignacio.</span></div>`;
+    incBox.style.display='flex';
+  } else {
+    incBox.style.display='none';
+  }
+
   // Asistencia: fechas únicas con registro
   const fechas=mesP.fechas||[];
   document.getElementById('asisList').innerHTML=fechas.length
@@ -340,9 +360,12 @@ function render(){
     : '<div class="empty">Aún no hay pagos cargados para este periodo</div>';
 
   // Vacaciones
+  // 28-ago-2026: el saldo automático quedó oculto — el cálculo no considera
+  // las vacaciones tomadas antes de FlowPoint, así que el número que salía
+  // era incorrecto. Ignacio pidió no mostrarlo hasta cargar ese histórico.
   const v=d.vacaciones||{};
-  document.getElementById('kSaldo').textContent=(v.saldo??'—');
-  document.getElementById('kSaldoSub').textContent=v.ingreso?`días hábiles · en la empresa desde ${v.ingreso}`:'días hábiles (lunes a viernes)';
+  document.getElementById('kSaldo').textContent='—';
+  document.getElementById('kSaldoSub').textContent='Saldo no disponible aún — pídelo directo a Ignacio';
   renderVacList(v.solicitudes||[]);
 
   // Avisos
@@ -386,9 +409,8 @@ function calcVacDias(){
   const el=document.getElementById('vacCalc');
   if(!de||!ha){ el.innerHTML='<span>📐</span><div>Selecciona las fechas — los días hábiles se calculan solos.</div>'; return; }
   const n=diasHabiles(de,ha);
-  const saldo=SES?.data?.vacaciones?.saldo;
+  // Saldo automático oculto (ver renderPortal) — no comparar contra él, quedaría mal.
   let extra='';
-  if(typeof saldo==='number'&&n>saldo) extra=` <strong style="color:var(--red)">⚠ supera tu saldo (${saldo})</strong>`;
   el.innerHTML=`<span>📐</span><div>Son <strong>${n} día${n!==1?'s':''} hábiles</strong> (lun-vie, sin contar sábados ni domingos).${extra}</div>`;
 }
 
