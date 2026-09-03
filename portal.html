@@ -158,7 +158,7 @@ select option{background:#1c1e28}
     <div class="kcard full" style="text-align:center;padding:20px;margin-bottom:12px">
       <div class="klbl">Días de vacaciones disponibles</div>
       <div class="saldo-big" id="kSaldo">—</div>
-      <div class="kub" id="kSaldoSub">días hábiles (lunes a viernes)</div>
+      <div class="ksub" id="kSaldoSub">días hábiles (lunes a viernes)</div>
     </div>
     <div class="panel"><div class="ph"><span>🏖️</span><span class="ph-t">Solicitar vacaciones</span></div>
       <div class="pb">
@@ -188,7 +188,7 @@ select option{background:#1c1e28}
 <div class="tabs" id="tabs" style="display:none">
   <div class="tab act" id="tab-resumen" onclick="verTab('resumen')"><span class="ti">📊</span>Resumen</div>
   <div class="tab" id="tab-pago" onclick="verTab('pago')"><span class="ti">💵</span>Mi Pago</div>
-  <div class="tab" id="tab-vacas" onclick="verTab('vacas')"><span class="ti">🖖️</span>Vacaciones</div>
+  <div class="tab" id="tab-vacas" onclick="verTab('vacas')"><span class="ti">🏖️</span>Vacaciones</div>
   <div class="tab" id="tab-avisos" onclick="verTab('avisos')"><span class="ti">📢</span>Avisos</div>
 </div>
 
@@ -341,7 +341,10 @@ function render(){
 
   // Registros producción
   document.getElementById('prodList').innerHTML=(mesP.registros||[]).length
-    ? mesP.registros.map(r=>`<div class="row"><div><div>${esc(r.fecha)} · ${esc(r.funcion||'')}</div><div class="sub">${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</div></div><div class="n green">${fmt$(r.bono)}</div></div>`).join('')
+    ? mesP.registros.map(r=>{
+        const badge = r.esOtroMes ? ` <span class="badge b-pend" style="margin-left:6px">${esc(r.mesEtiqueta||'otro mes')}</span>` : '';
+        return `<div class="row"><div><div>${esc(r.fecha)}${badge} · ${esc(r.funcion||'')}</div><div class="sub">${esc(r.modelo||'—')} · ${(r.unidades||0).toLocaleString('es-CL')} und.</div></div><div class="n green">${fmt$(r.bono)}</div></div>`;
+      }).join('')
     : '<div class="empty">Sin registros este mes</div>';
 
   // Mi Pago (Bloque 14)
@@ -379,7 +382,7 @@ function render(){
 function renderVacList(sols){
   const B={Pendiente:'b-pend',Aprobada:'b-apr',Rechazada:'b-rech'};
   document.getElementById('vacList').innerHTML=sols.length
-    ? sols.map(s=>`<div class="row"><div><div>${esc(s.desde)} → ${esc(s.hasta)}</div><div class="sub">${s.dias} día${s.dias!==1?'s':''} hábiles${s.comentario?' · '+esc(s.comentario):''}</div></div><span class="badge ${B[s.estado]||'b-pend'}">${esc(s.estado)}</span></div>`).join('')
+    ? sols.map(s=>`<div class="row"><div><div>${esc(s.desde)} → ${esc(s.hasta)}</div><div class="sub">${s.dias} día${s.dias!==1?'s':''} hábiles${s.comentario?' · '+esc(o.comentario):''}</div></div><span class="badge ${B[s.estado]||'b-pend'}">${esc(s.estado)}</span></div>`).join('')
     : '<div class="empty">Sin solicitudes aún</div>';
 }
 
