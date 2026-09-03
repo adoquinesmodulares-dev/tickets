@@ -394,8 +394,18 @@ function render(){
   document.getElementById('pgPagado').textContent=fmt$(pg.pagado);
   document.getElementById('pgPend').textContent=fmt$(pg.pendiente);
   if(pg.periodo){ const pp=pg.periodo.split('-'); document.getElementById('pgPeriodo').textContent=MESL[parseInt(pp[1],10)-1]+' '+pp[0]; }
-  document.getElementById('pgLista').innerHTML=(pg.items||[]).length
-    ? pg.items.map(it=>{
+  // La fila "Saldo [Mes] [Año]" (sin número) es el TOTAL de referencia del
+  // período — ya se muestra arriba como "Total del periodo". No es un pago
+  // real, así que no debe listarse aquí como si estuviera "Pendiente"
+  // (confunde con el resumen, que ya descuenta lo pagado). Solo se listan los
+  // movimientos reales: Anticipo y Saldo N (con número).
+  const itemsPago=(pg.items||[]).filter(it=>{
+    const esAnticipo=/anticipo/i.test(it.concepto||'');
+    const esSaldoNumerado=/saldo\s*\d/i.test(it.concepto||'');
+    return esAnticipo||esSaldoNumerado;
+  });
+  document.getElementById('pgLista').innerHTML=itemsPago.length
+    ? itemsPago.map(it=>{
         const esDiasTrabajados = it.concepto==='Sueldo Base (prorrateado)' && it.nota && /d[ií]as trabajados/i.test(it.nota);
         const etiqueta = esDiasTrabajados ? 'Sueldo Base ('+it.nota+')' : it.concepto;
         return `<div class="row"><div><div>${esc(etiqueta)}</div><div class="sub">${it.estado==='Pagado'?'✓ Pagado'+(it.fechaPago?' · '+esc(it.fechaPago):''):'⏳ Pendiente'}${it.nota&&!esDiasTrabajados?' · '+esc(it.nota):''}</div></div><div class="n" style="color:${it.monto<0?'var(--red)':(it.estado==='Pagado'?'var(--green)':'var(--amber)')}">${fmt$(it.monto)}</div></div>`;
